@@ -12,6 +12,8 @@ import sys
 
 logPath = "/home/tanner/src/WHAT/backend/log/"
 
+lwp_msg=['','','']
+
 def calcSpd(wind_spd,wind_spd_units,surface,height,height_units):    
     """
     Input user params
@@ -24,6 +26,10 @@ def calcSpd(wind_spd,wind_spd_units,surface,height,height_units):
     site_height=lwp.canopy_heights[surface]
     zpd = lwp.calculateZPD(site_height,True)
     uz=lwp.neutral_uz(metric_speed,metric_height,site_roughness,zpd)
+
+    lwp_msg[0]=str(metric_speed)
+    lwp_msg[1]=str(metric_height)
+    lwp_msg[2]=str(uz)    
     
     user_speed = calcUnits.convertToJiveUnits(uz,wind_spd_units)        
     return user_speed
@@ -42,19 +48,31 @@ adjustedSpeed=calcSpd(arg_windSpd,arg_spdUnits,
 
 with open(logPath+"xLog","w") as f:
     f.write('Inputs:\n')
+    f.write("Wind Speed: ")
     f.write(str(arg_windSpd))
-    f.write("\n")
+    f.write(" ")
     f.write(str(arg_spdUnits))
+    f.write("\n")
+    f.write("Metric Wind Speed: ")
+    f.write(str(lwp_msg[0]))
     f.write("\n")
     f.write(str(arg_surface))
     f.write("\n")
+    f.write("Height: ")
     f.write(str(arg_height))
     f.write("\n")
     f.write(str(arg_hgtUnits))
     f.write("\n")
-    f.write("Outputs:")
+    f.write("Metric Height: ")
+    f.write(str(lwp_msg[1]))
     f.write("\n")
+    f.write("Outputs:")
+    f.write("m_speed_out: ")
+    f.write(lwp_msg[2])
+    f.write("\n")
+    f.write("user_speed: ")
     f.write(str(adjustedSpeed))
+#    f.write("\n")
     f.write("\nErrors:\n")
     f.write(str(lwp.error_msg[0]))
     f.write("\n")

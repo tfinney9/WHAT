@@ -16,7 +16,7 @@ z = height at uz
 """
 def neutral_uz(u_star,z,z0,d):
     if(z-d)<0:
-        return u_star
+        d=0
         error_msg[0]="z-d<0!"
         
     uz = (u_star)/(vonKarmanConstant) * (numpy.log((z-d)/(z0)))
