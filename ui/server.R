@@ -15,7 +15,7 @@ shinyServer(function(input,output,session){
   
   observeEvent(input$exec,
                {
-                 gArgs=paste("\"",input$wind_speed,"\" \"",input$spd_units,"\" \"",input$surface,"\" \"",input$height,"\" \"",input$hght_units,"\"",sep="")
+                 gArgs=paste("\"",input$wind_speed,"\" \"",input$spd_units,"\" \"",input$surface,"\" \"",input$height,"\" \"",input$canopy,"\" \"",input$hght_units,"\"",sep="")
                  print(gArgs)
                  runFile<-system2(command=runPath,args=gArgs,stdout=TRUE)
                  output$adjustedSpeed<-renderPrint(runFile)

@@ -31,14 +31,20 @@ shinyUI(fluidPage(theme=shinytheme("sandstone"),
                                                                                    "chains per hour"="cph",
                                                                                    "furlongs per fortnight"="fpf"))
                   )),
-           fluidRow(
-           column(12,
-           selectInput("surface","Select Surface/Vegetation",
-                       c(Choose='',vegData[1]),selectize=TRUE,selected="evergreen needle-leaf trees")
-           )),
+           hr(),
            fluidRow(
            column(8,
-           numericInput("height",label="Enter Output Wind Height",value=20,min=0,max=1000)
+           selectInput("surface","Select Surface/Vegetation",
+                       c(Choose='',vegData[1]),selectize=TRUE,selected="evergreen needle-leaf trees")
+           ),
+           column(4,
+                  numericInput("canopy",label="Enter Canopy Height",value=0,min=0,max=10000)
+                  )
+           ),
+           hr(),
+           fluidRow(
+           column(8,
+           numericInput("height",label="Enter Output Wind Height",value=100,min=0,max=1000)
            ),
            column(4,
                   selectizeInput("hght_units","Height Units",choices=list("feet (ft)"="ft",

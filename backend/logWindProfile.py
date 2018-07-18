@@ -12,9 +12,9 @@ import sys
 
 logPath = "/home/tanner/src/WHAT/backend/log/"
 
-lwp_msg=['','','']
+lwp_msg=['','','','']
 
-def calcSpd(wind_spd,wind_spd_units,surface,height,height_units):    
+def calcSpd(wind_spd,wind_spd_units,surface,height,height_units,canopy_height):    
     """
     Input user params
     return height adjusted speed
@@ -23,13 +23,14 @@ def calcSpd(wind_spd,wind_spd_units,surface,height,height_units):
     metric_height=calcUnits.distToMetric(height,height_units)         
 
     site_roughness=lwp.roughness[surface]
-    site_height=lwp.canopy_heights[surface]
-    zpd = lwp.calculateZPD(site_height,True)
+    site_height = calcUnits.distToMetric(canopy_height,height_units)
+    zpd=lwp.calculateZPD(site_height,False)
     uz=lwp.neutral_uz(metric_speed,metric_height,site_roughness,zpd)
 
     lwp_msg[0]=str(metric_speed)
     lwp_msg[1]=str(metric_height)
-    lwp_msg[2]=str(uz)    
+    lwp_msg[2]=str(site_height)+" zpd: "+str(zpd)
+    lwp_msg[3]=str(uz)    
     
     user_speed = calcUnits.convertToJiveUnits(uz,wind_spd_units)        
     return user_speed
@@ -40,11 +41,12 @@ arg_windSpd=float(sys.argv[1])
 arg_spdUnits=str(sys.argv[2])
 arg_surface=str(sys.argv[3])
 arg_height=float(sys.argv[4])
-arg_hgtUnits=str(sys.argv[5])
+arg_canopy=float(sys.argv[5])
+arg_hgtUnits=str(sys.argv[6])
 
 #calculate adjusted speed
 adjustedSpeed=calcSpd(arg_windSpd,arg_spdUnits,
-                      arg_surface,arg_height,arg_hgtUnits)
+                      arg_surface,arg_height,arg_hgtUnits,arg_canopy)
 
 with open(logPath+"xLog","w") as f:
     f.write('Inputs:\n')
@@ -56,7 +58,11 @@ with open(logPath+"xLog","w") as f:
     f.write("Metric Wind Speed: ")
     f.write(str(lwp_msg[0]))
     f.write("\n")
+    f.write("Surface: ")
     f.write(str(arg_surface))
+    f.write("\n")
+    f.write("Canopy Height: ")
+    f.write(str(arg_canopy))
     f.write("\n")
     f.write("Height: ")
     f.write(str(arg_height))
@@ -65,10 +71,13 @@ with open(logPath+"xLog","w") as f:
     f.write("\n")
     f.write("Metric Height: ")
     f.write(str(lwp_msg[1]))
+    f.write("\nCH/ZPD: ")
+    f.write(str(lwp_msg[2]))
     f.write("\n")
     f.write("Outputs:")
+    f.write("\n")
     f.write("m_speed_out: ")
-    f.write(lwp_msg[2])
+    f.write(lwp_msg[3])
     f.write("\n")
     f.write("user_speed: ")
     f.write(str(adjustedSpeed))
