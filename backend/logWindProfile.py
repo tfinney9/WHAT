@@ -14,7 +14,7 @@ import sys
 #logPath = "/home/tanner/src/WHAT/backend/log/"
 
 #Deploy Paths
-logPath = "/home/ubuntu/hd2/src/WHAT/backend/log/"
+logPath = "/home/ubuntu/hd2/src/WHAT/ui/log/"
 
 lwp_msg=['','','','']
 
