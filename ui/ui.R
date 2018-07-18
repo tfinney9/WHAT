@@ -10,8 +10,14 @@ library(shinythemes)
 
 
 #Dev Paths
-vegPath<-"/home/tanner/src/WHAT/backend/data/surface_types.csv"
+#vegPath<-"/home/tanner/src/WHAT/backend/data/surface_types.csv"
+
+#Deploy Paths
+vegPath<-"/home/ubuntu/hd2/src/WHAT/backend/data/surface_types.csv"
+
 vegData<-read.csv(file=vegPath)
+
+
 
 shinyUI(fluidPage(theme=shinytheme("sandstone"),
   titlePanel("WHAT"),

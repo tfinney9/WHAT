@@ -10,7 +10,11 @@ import calcUnits
 import lwp
 import sys
 
-logPath = "/home/tanner/src/WHAT/backend/log/"
+#Dev Paths
+#logPath = "/home/tanner/src/WHAT/backend/log/"
+
+#Deploy Paths
+logPath = "/home/ubuntu/hd2/src/WHAT/backend/log/"
 
 lwp_msg=['','','','']
 

@@ -9,7 +9,10 @@ library(shinyjs)
 library(leaflet)
 
 #dev Paths
-runPath<-"/home/tanner/src/WHAT/backend/logWindProfile.py"
+#runPath<-"/home/tanner/src/WHAT/backend/logWindProfile.py"
+
+#deploy Paths
+runPath<-"/home/ubuntu/hd2/src/WHAT/backend/logWindProfile.py"
 
 shinyServer(function(input,output,session){
   
