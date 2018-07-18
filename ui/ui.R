@@ -7,6 +7,7 @@
 library(shiny)
 library(shinyjs)
 library(shinythemes)
+library(scatterD3)
 
 
 #Dev Paths
@@ -19,7 +20,7 @@ vegData<-read.csv(file=vegPath)
 
 
 
-shinyUI(fluidPage(theme=shinytheme("sandstone"),
+shinyUI(fluidPage(theme=shinytheme("cosmo"),
   titlePanel("WHAT"),
   h3("Wind Height Adjustment Tool"),
   hr(),
@@ -65,7 +66,14 @@ shinyUI(fluidPage(theme=shinytheme("sandstone"),
           br(),
           hr(),
           verbatimTextOutput("adjustedSpeed")
-         )
+
+         ),
+      column(4,
+             # plotOutput("logWindPlot")
+             h4("Wind Profile"),
+             scatterD3Output("logWindPlot")
+        
+      )
     
   )
   

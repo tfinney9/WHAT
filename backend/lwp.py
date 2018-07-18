@@ -14,11 +14,7 @@ z0 = surface Roughness (meters)
 d = zero plane displacement
 z = height at uz
 """
-def neutral_uz(u_star,z,z0,d):
-    if(z-d)<0:
-        d=0
-        error_msg[0]="z-d<0!"
-        
+def neutral_uz(u_star,z,z0,d):       
     uz = (u_star)/(vonKarmanConstant) * (numpy.log((z-d)/(z0)))
     return uz
     
