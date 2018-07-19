@@ -10,12 +10,15 @@ library(shinythemes)
 library(scatterD3)
 
 
-#Dev Paths
-#vegPath<-"/home/tanner/src/WHAT/backend/data/surface_types.csv"
 
 #Deploy Paths
 vegPath<-"/home/ubuntu/hd2/src/WHAT/backend/data/surface_types.csv"
 
+#Dev Paths
+if(Sys.getenv("USER")[1]=="tanner")
+{
+  vegPath<-"/home/tanner/src/WHAT/backend/data/surface_types.csv"
+}
 vegData<-read.csv(file=vegPath)
 
 
@@ -28,7 +31,7 @@ shinyUI(fluidPage(theme=shinytheme("cosmo"),
     column(8,
            wellPanel(
              fluidRow(
-           column(8,
+           column(4,
            numericInput("wind_speed",label="Enter Wind Speed",value=10,min=0,max=1000)
                   ),
            column(4,
@@ -37,7 +40,11 @@ shinyUI(fluidPage(theme=shinytheme("cosmo"),
                                                                                    "kilometers per hour (kph)"="kph",
                                                                                    "chains per hour"="cph",
                                                                                    "furlongs per fortnight"="fpf"))
-                  )),
+                  ),
+           column(4,
+                  numericInput("init_hgt",label="Wind Speed Height",value=5,min=0,max=1000)
+                  )
+           ),
            hr(),
            fluidRow(
            column(8,

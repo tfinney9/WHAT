@@ -11,31 +11,39 @@ import lwp
 import sys
 import numpy
 import time
+import getpass
 
+logPath=''
+plotDataPath=''
 #Dev Paths
-#logPath = "/home/tanner/src/WHAT/backend/log/"
-#plotDataPath="/home/tanner/src/WHAT/backend/data/plots/"
-
+if getpass.getuser()=='tanner':
+    logPath = "/home/tanner/src/WHAT/backend/log/"
+    plotDataPath="/home/tanner/src/WHAT/backend/data/plots/"
 #Deploy Paths
-logPath = "/home/ubuntu/hd2/src/WHAT/ui/log/"
-plotDataPath="/home/ubuntu/hd2/src/WHAT/ui/log/plots/"
+else:
+    logPath = "/home/ubuntu/hd2/src/WHAT/ui/log/"
+    plotDataPath="/home/ubuntu/hd2/src/WHAT/ui/log/plots/"
 
 lwp_msg=['','','','','']
 generate_plot=[False]
 
 
-def calcSpd(wind_spd,wind_spd_units,surface,height,height_units,canopy_height):    
+def calcSpd(wind_spd,wind_spd_units,surface,initial_height,
+            height,height_units,canopy_height):    
     """
     Input user params
     return height adjusted speed
     """
     metric_speed=calcUnits.convertFromJiveUnits(wind_spd,wind_spd_units)
     metric_height=calcUnits.distToMetric(height,height_units)         
+    metric_iHeight=calcUnits.distToMetric(initial_height,height_units)
 
     site_roughness=lwp.roughness[surface]
     site_height = calcUnits.distToMetric(canopy_height,height_units)
     zpd=lwp.calculateZPD(site_height,False)
-    uz=lwp.neutral_uz(metric_speed,metric_height,site_roughness,zpd)
+
+#    uz=lwp.neutral_uz(metric_speed,metric_height,site_roughness,zpd)
+    uz = lwp.twoPointNeutral_uz(metric_speed,metric_iHeight,metric_height,site_roughness,zpd)
     
     user_speed = calcUnits.convertToJiveUnits(uz,wind_spd_units)        
 
@@ -49,7 +57,9 @@ def calcSpd(wind_spd,wind_spd_units,surface,height,height_units,canopy_height):
         fWrite.write(x_str)
         
         for i in range(len(z_arr)):
-            uz_i = lwp.neutral_uz(metric_speed,z_arr[i],site_roughness,zpd)
+#            uz_i = lwp.neutral_uz(metric_speed,z_arr[i],site_roughness,zpd)
+            uz_i = lwp.twoPointNeutral_uz(metric_speed,metric_iHeight,
+                                          z_arr[i],site_roughness,zpd)
             uz_nativeUnits=calcUnits.convertToJiveUnits(uz_i,wind_spd_units)
             hgt_nativeUnits=calcUnits.distFromMetric(z_arr[i],height_units)
             
@@ -69,7 +79,7 @@ def calcSpd(wind_spd,wind_spd_units,surface,height,height_units,canopy_height):
         fWrite.write(",Output\n")
         fWrite.write(str(wind_spd))
         fWrite.write(",")
-        fWrite.write(str(0))
+        fWrite.write(str(initial_height))
         fWrite.write(",Input\n")
         lwp_msg[4]="Data File Written!"
         fWrite.close()
@@ -89,14 +99,16 @@ def calcSpd(wind_spd,wind_spd_units,surface,height,height_units,canopy_height):
 arg_windSpd=float(sys.argv[1])
 arg_spdUnits=str(sys.argv[2])
 arg_surface=str(sys.argv[3])
-arg_height=float(sys.argv[4])
-arg_canopy=float(sys.argv[5])
-arg_hgtUnits=str(sys.argv[6])
+arg_initialHeight=float(sys.argv[4])
+arg_height=float(sys.argv[5])
+arg_canopy=float(sys.argv[6])
+arg_hgtUnits=str(sys.argv[7])
 generate_plot[0]=True
 
 #calculate adjusted speed
 adjustedSpeed,dataFileName=calcSpd(arg_windSpd,arg_spdUnits,
-                      arg_surface,arg_height,arg_hgtUnits,arg_canopy)
+                      arg_surface,arg_initialHeight,
+                      arg_height,arg_hgtUnits,arg_canopy)
 
 with open(logPath+"xLog","w") as f:
     f.write('Inputs:\n')
@@ -110,6 +122,10 @@ with open(logPath+"xLog","w") as f:
     f.write("\n")
     f.write("Surface: ")
     f.write(str(arg_surface))
+    f.write("\n")
+    f.write("Initial Height:")
+    f.write(str(arg_initialHeight))
+    f.write(arg_hgtUnits)
     f.write("\n")
     f.write("Canopy Height: ")
     f.write(str(arg_canopy))

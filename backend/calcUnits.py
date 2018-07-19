@@ -63,7 +63,7 @@ def convertToJiveUnits(metric_value,to_unit):
             return (spd.to(u.chain/u.hour)).magnitude  
         if(to_unit=="fpf"):
             spd=metric_value*u.meter/u.second
-            return (spd.to(u.meter/u.second)).magnitude 
+            return (spd.to(u.furlong/u.fortnight)).magnitude 
         
 """
 Distance (Height)

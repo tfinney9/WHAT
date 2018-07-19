@@ -19,6 +19,16 @@ def neutral_uz(u_star,z,z0,d):
     return uz
     
 """
+uz_2 = velocity at z=z2
+uz_1 = velocity at z=z1
+d = zero plane displacement (meters)
+z0 = surface roughness (meters)
+"""     
+def twoPointNeutral_uz(uz_1,z1,z2,z0,d):
+    uz_2 = uz_1*(numpy.log((z2-d)/z0)/(numpy.log((z1-d)/z0)))
+    return uz_2
+    
+"""
 Calculate the Zero Plane Displacement
 Wikipedia says it can be approximated between 2/3
 and 3/4 of the obstacle height...

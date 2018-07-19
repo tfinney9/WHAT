@@ -8,22 +8,27 @@ library(shiny)
 library(shinyjs)
 library(scatterD3)
 
-#dev Paths
-#runPath<-"/home/tanner/src/WHAT/backend/logWindProfile.py"
 
 #deploy Paths
 runPath<-"/home/ubuntu/hd2/src/WHAT/backend/logWindProfile.py"
+
+#dev Paths
+if(Sys.getenv("USER")[1]=="tanner")
+{
+  runPath<-"/home/tanner/src/WHAT/backend/logWindProfile.py"
+}
+
 
 shinyServer(function(input,output,session){
   
   observeEvent(input$exec,
                {
-                 gArgs=paste("\"",input$wind_speed,"\" \"",input$spd_units,"\" \"",input$surface,"\" \"",input$height,"\" \"",input$canopy,"\" \"",input$hght_units,"\"",sep="")
+                 gArgs=paste("\"",input$wind_speed,"\" \"",input$spd_units,"\" \"",input$surface,"\" \"",input$init_hgt,"\" \"",input$height,"\" \"",input$canopy,"\" \"",input$hght_units,"\"",sep="")
                  print(gArgs)
                  runFile<-system2(command=runPath,args=gArgs,stdout=TRUE)
                  print(runFile)
                  outDat<-strsplit(runFile,":|: ")
-                 output$adjustedSpeed<-renderPrint(outDat[[1]][1])
+                 output$adjustedSpeed<-renderPrint(paste("Calculated wind speed:",outDat[[1]][1]))
                  
                  point_x<-as.double(outDat[[1]][5])
                  point_y<-as.double(outDat[[1]][7])
