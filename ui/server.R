@@ -20,10 +20,11 @@ if(Sys.getenv("USER")[1]=="tanner")
 
 
 shinyServer(function(input,output,session){
-  
+
   observeEvent(input$exec,
                {
-                 gArgs=paste("\"",input$wind_speed,"\" \"",input$spd_units,"\" \"",input$surface,"\" \"",input$init_hgt,"\" \"",input$height,"\" \"",input$canopy,"\" \"",input$hght_units,"\"",sep="")
+                 print(input$simpleCanopy)
+                 gArgs=paste("\"",input$wind_speed,"\" \"",input$spd_units,"\" \"",input$surface,"\" \"",input$init_hgt,"\" \"",input$height,"\" \"",input$canopy,"\" \"",input$hght_units,"\" \"",input$simpleCanopy,"\"",sep="")
                  print(gArgs)
                  runFile<-system2(command=runPath,args=gArgs,stdout=TRUE)
                  print(runFile)
@@ -32,6 +33,8 @@ shinyServer(function(input,output,session){
                  
                  point_x<-as.double(outDat[[1]][5])
                  point_y<-as.double(outDat[[1]][7])
+                 
+                 
                  
                  plotData<-read.csv(file=trimws(outDat[[1]][3]),check.names=FALSE)
                  # plotData<-read.csv(file=trimws("/home/tanner/src/WHAT/backend/data/plots/pDat.csv"),check.names=FALSE)

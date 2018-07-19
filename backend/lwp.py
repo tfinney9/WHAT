@@ -40,6 +40,48 @@ def calculateZPD(canopy_height,aggressive):
         return canopy_height*3./4.
 
 """
+As Described by "An Introduction to Environmental Biophysics"
+(Campbell, Norman)
+Page 72 equation 5.4
+"""
+def simpleCanopyModel(u_h,a,z,h):
+    u_z = u_h*numpy.exp(a*(z/h-1.))
+    return u_z
+    
+
+def calcSimplecCanopyToLWP(u_h,z_out,canopy_height,
+                          canopy_roughness,initial_height,surface,ZPD):
+    """
+    Height is less than the canopy
+    use the simple canopy model to find
+    the wind at the top of the canopy 
+    and then use that to find the wind at the desired z
+    """
+    canopy_attenuation=attenuation[surface]
+    u_top=simpleCanopyModel(u_h,canopy_attenuation,
+                            canopy_height,initial_height)
+    u_lwp=twoPointNeutral_uz(u_top,canopy_height,z_out,
+                             canopy_roughness,ZPD)
+                             
+    return u_lwp
+
+def calcLWPToSimpleCanopy(uz_init,init_height,z_out,canopy_height,canopy_roughness,surface,ZPD):
+    """
+    Reverse of above
+    """
+    canopy_attenuation=attenuation[surface]
+    u_top=twoPointNeutral_uz(uz_init,init_height,canopy_height,canopy_roughness,ZPD)
+    u_inCanopy=simpleCanopyModel(u_top,canopy_attenuation,z_out,canopy_height)
+    return u_inCanopy
+
+def calcIntraSimpleCanopy(u,z_out,z_in,surface):
+    canopy_attenuation=attenuation[surface]
+    u_inCanopy=simpleCanopyModel(u,canopy_attenuation,z_out,z_in)
+    return u_inCanopy
+
+
+
+"""
 Roughness Values (meters)
 http://www-das.uwyo.edu/~geerts/cwx/notes/chap14/roughness.html
 http://collaboration.cmc.ec.gc.ca/science/rpn/gem/gem-climate/Version_3.3.0/dictionary_geophys.pdf
@@ -63,6 +105,37 @@ roughness = {"sea water":0.001,
              "swamp":0.05,
              "desert":0.05,
              "mixed wood forests":1.5}    
+
+"""
+Attentuation Coefficients
+"""
+atten_conifer=1.1
+atten_deciduous=0.4
+atten_zero=0.0
+atten_wheat=2.5
+atten_corn=2.0
+atten_crapcorn=2.8
+atten_sunflower=1.3
+
+attenuation = {"sea water":atten_zero,
+             "glacier":atten_zero,
+             "lake":atten_zero,
+             "tundra":atten_zero,
+             "long grass":atten_wheat,
+             "crops":atten_corn,
+             "urban":atten_zero,
+             "evergreen needle-leaf trees":atten_conifer,
+             "evergreen broadleaf trees":atten_deciduous,
+             "deciduous needle-leaf trees":atten_conifer,
+             "deciduous broadleaf trees":atten_deciduous,
+             "tropical trees":atten_deciduous,
+             "drought deciduous trees":atten_conifer,
+             "shrubs":atten_sunflower,
+             "short grass and forbs":atten_sunflower,
+             "swamp":atten_deciduous,
+             "desert":atten_zero,
+             "mixed wood forests":atten_conifer}    
+
             
 """
 Canopy Heights

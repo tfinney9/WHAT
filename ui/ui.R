@@ -67,6 +67,12 @@ shinyUI(fluidPage(theme=shinytheme("cosmo"),
                                                                           "furlong"))
                   )
            ),
+           hr(),
+           fluidRow(
+             column(12,
+                    checkboxInput("simpleCanopy","Enable Simple Canopy Model",value=TRUE)
+                    )
+           ),
            br()
           ),
           actionButton("exec",label="Calculate Wind Height!",class="btn-primary"),
