@@ -20,6 +20,24 @@ if(Sys.getenv("USER")[1]=="tanner")
 
 
 shinyServer(function(input,output,session){
+  useShinyjs()
+  
+  #Sanity Checks, everything must be filled out or it will grey out the button
+  observe({
+    if(is.numeric(input$wind_speed)==FALSE || is.numeric(input$init_hgt)==FALSE || is.numeric(input$canopy)==FALSE || is.numeric(input$height)==FALSE)
+    {
+      shinyjs::disable("exec")
+      shinyjs::show("crapInputs")
+      output$crapInputs<-renderPrint("Invalid Inputs")
+    }
+    if(is.numeric(input$wind_speed)==TRUE && is.numeric(input$init_hgt)==TRUE && is.numeric(input$canopy)==TRUE  && is.numeric(input$height)==TRUE)
+    {
+      # output$crapInputs<-renderPrint("")
+      shinyjs::hide("crapInputs")
+      shinyjs::enable("exec")
+    }
+  })
+  
 
   observeEvent(input$exec,
                {

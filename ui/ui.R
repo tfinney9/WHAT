@@ -24,6 +24,7 @@ vegData<-read.csv(file=vegPath)
 
 
 shinyUI(fluidPage(theme=shinytheme("cosmo"),
+  useShinyjs(),
   titlePanel("WHAT"),
   h3("Wind Height Adjustment Tool"),
   hr(),
@@ -78,6 +79,7 @@ shinyUI(fluidPage(theme=shinytheme("cosmo"),
           actionButton("exec",label="Calculate Wind Height!",class="btn-primary"),
           br(),
           hr(),
+          verbatimTextOutput("crapInputs"),
           verbatimTextOutput("adjustedSpeed")
 
          ),

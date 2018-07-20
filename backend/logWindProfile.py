@@ -19,6 +19,18 @@ arg_canopy=float(sys.argv[6])
 arg_hgtUnits=str(sys.argv[7])
 arg_SCM=str(sys.argv[8])
 
+#The Math doesn't work out if the canopy height== the wind height
+# offset by .1 fixes it
+if arg_canopy==arg_initialHeight:
+    arg_canopy-=0.1
+    if arg_canopy<=0:
+        arg_canopy=0
+
+
+#If the canopy is zero, don't use the model
+if arg_canopy==0:
+    arg_SCM="FALSE"
+
 
 #Add in the simple Canopy Model
 if arg_SCM=="TRUE":
