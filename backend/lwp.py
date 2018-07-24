@@ -43,10 +43,34 @@ def calculateZPD(canopy_height,aggressive):
 As Described by "An Introduction to Environmental Biophysics"
 (Campbell, Norman)
 Page 72 equation 5.4
+
+#Part 1 is valid for the top 40% of canopy
+#Part 2 is valid for the bottom 10% of the canopy
+
+h = Height of specified speed
+z = Height of outspeed
 """
-def simpleCanopyModel(u_h,a,z,h):
-    u_z = u_h*numpy.exp(a*(z/h-1.))
-    return u_z
+def simpleCanopyModel(u_h,a,z,h,roughness,zpd,cp_hgt):
+    enableDivision=True    
+    btm10 = cp_hgt*0.20 #Use neutral uz for lower 10%
+#    top40 = 0.60*cp_hgt # user simple canopy model for top 60%
+    
+    if enableDivision==True:
+        if h<=btm10:
+            u_z = neutral_uz(u_h,z,roughness,zpd)
+            return u_z
+
+#        if z<=btm10:
+#            u_z = neutral_uz(u_h,z,roughness,zpd)
+#            return u_z
+
+        else:
+            u_z = u_h*numpy.exp(a*((z/h)-1.))
+            return u_z
+
+    if enableDivision==False:
+        u_z = u_h*numpy.exp(a*((z/h)-1.))
+        return u_z
     
 
 def calcSimplecCanopyToLWP(u_h,z_out,canopy_height,
@@ -59,7 +83,7 @@ def calcSimplecCanopyToLWP(u_h,z_out,canopy_height,
     """
     canopy_attenuation=attenuation[surface]
     u_top=simpleCanopyModel(u_h,canopy_attenuation,
-                            canopy_height,initial_height)
+                            canopy_height,initial_height,canopy_roughness,ZPD,canopy_height)
     u_lwp=twoPointNeutral_uz(u_top,canopy_height,z_out,
                              canopy_roughness,ZPD)
                              
@@ -71,12 +95,12 @@ def calcLWPToSimpleCanopy(uz_init,init_height,z_out,canopy_height,canopy_roughne
     """
     canopy_attenuation=attenuation[surface]
     u_top=twoPointNeutral_uz(uz_init,init_height,canopy_height,canopy_roughness,ZPD)
-    u_inCanopy=simpleCanopyModel(u_top,canopy_attenuation,z_out,canopy_height)
+    u_inCanopy=simpleCanopyModel(u_top,canopy_attenuation,z_out,canopy_height,canopy_roughness,ZPD,canopy_height)
     return u_inCanopy
 
-def calcIntraSimpleCanopy(u,z_out,z_in,surface):
+def calcIntraSimpleCanopy(u,z_out,z_in,surface,canopy_roughness,ZPD,canopy_height):
     canopy_attenuation=attenuation[surface]
-    u_inCanopy=simpleCanopyModel(u,canopy_attenuation,z_out,z_in)
+    u_inCanopy=simpleCanopyModel(u,canopy_attenuation,z_out,z_in,roughness,ZPD,canopy_height)
     return u_inCanopy
 
 

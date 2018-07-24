@@ -93,7 +93,7 @@ def generate_simpleCanopyAndNeutralLWPData(xdir,mWindSpeed,wsUnits,mInHeight,mOH
         #Now solve the canopy compnent using the lowest level speed in the LWP           
         cz=numpy.linspace(0,mCanopyHeight)
         for i in range(len(cz)):
-            uzic=lwp.simpleCanopyModel(uza[0],atten,cz[i],mCanopyHeight)
+            uzic=lwp.simpleCanopyModel(uza[0],atten,cz[i],mCanopyHeight,roughness,zpd,mCanopyHeight)
             if uzic<0:
                 continue
             if numpy.isnan(uzic)==True:
@@ -112,7 +112,7 @@ def generate_simpleCanopyAndNeutralLWPData(xdir,mWindSpeed,wsUnits,mInHeight,mOH
     if xdir==1: #init height is within the canopy    
         z=numpy.linspace(0,mCanopyHeight)
         for i in range(len(z)):
-            uzic=lwp.simpleCanopyModel(mWindSpeed,atten,z[i],mInHeight)
+            uzic=lwp.simpleCanopyModel(mWindSpeed,atten,z[i],mInHeight,roughness,zpd,mCanopyHeight)
             if uzic<0:
                 continue
             if numpy.isnan(uzic)==True:
@@ -230,7 +230,7 @@ def calc_simpleCanopyAndNeutralLWP(windSpeed,windSpeedUnits,initialHeight,canopy
     if mInitHeight<mCanopyHeight: #in the Canopy for inlet
         agov[0]=1
         if mOutHeight<mCanopyHeight: #still in the canopy
-            uz[0]=lwp.calcIntraSimpleCanopy(mSpeed,mOutHeight,mInitHeight,surface)
+            uz[0]=lwp.calcIntraSimpleCanopy(mSpeed,mOutHeight,mInitHeight,surface,surfaceRoughness,zpd,mCanopyHeight)
         if mOutHeight>=mCanopyHeight: #in the log for out
             uz[0]=lwp.calcSimplecCanopyToLWP(mSpeed,mOutHeight,mCanopyHeight,surfaceRoughness,mInitHeight,surface,zpd)   
     
