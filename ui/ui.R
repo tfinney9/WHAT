@@ -8,16 +8,20 @@ library(shiny)
 library(shinyjs)
 library(shinythemes)
 library(scatterD3)
-
+library(shinyBS)
+library(shinycssloaders)
 
 
 #Deploy Paths
-vegPath<-"/home/ubuntu/hd2/src/WHAT/backend/data/surface_types.csv"
+# vegPath<-"/home/ubuntu/hd2/src/WHAT/backend/data/surface_types.csv"
+vegPath<-"/home/ubuntu/hd2/src/WHAT/backend/data/canopy_types.csv"
+
 
 #Dev Paths
 if(Sys.getenv("USER")[1]=="tanner")
 {
-  vegPath<-"/home/tanner/src/WHAT/backend/data/surface_types.csv"
+  # vegPath<-"/home/tanner/src/WHAT/backend/data/surface_types.csv"
+  vegPath<-"/home/tanner/src/WHAT/backend/data/canopy_types.csv"
 }
 vegData<-read.csv(file=vegPath)
 
@@ -43,23 +47,27 @@ shinyUI(fluidPage(theme=shinytheme("cosmo"),
                                                                                    "furlongs per fortnight"="fpf"))
                   ),
            column(4,
-                  numericInput("init_hgt",label="Wind Speed Height",value=5,min=0,max=1000)
-                  )
+                  numericInput("init_hgt",label="Wind Speed Height (AGL)",value=5,min=0,max=1000)
+                  ),
+           bsTooltip("init_hgt","Height Above Ground Level",placement = "bottom",trigger="hover")
            ),
            hr(),
            fluidRow(
-           column(8,
+           column(4,
            selectInput("surface","Select Surface/Vegetation",
-                       c(Choose='',vegData[1]),selectize=TRUE,selected="evergreen needle-leaf trees")
+                       c(Choose='',vegData[1]),selectize=TRUE,selected="Aspen")
            ),
            column(4,
                   numericInput("canopy",label="Enter Canopy Height",value=0,min=0,max=10000)
-                  )
+                  ),
+           column(4,
+                  numericInput("canopy_ratio",label="Enter Canopy Ratio",value=0.7,min=0,max=1)
+           )
            ),
            hr(),
            fluidRow(
            column(8,
-           numericInput("height",label="Enter Output Wind Height",value=100,min=0,max=1000)
+           numericInput("height",label="Enter Output Wind Height (Above Ground Level)",value=100,min=0,max=1000)
            ),
            column(4,
                   selectizeInput("hght_units","Height Units",choices=list("feet (ft)"="ft",
@@ -71,7 +79,9 @@ shinyUI(fluidPage(theme=shinytheme("cosmo"),
            hr(),
            fluidRow(
              column(12,
-                    checkboxInput("simpleCanopy","Enable Simple Canopy Model",value=TRUE)
+                    # checkboxInput("simpleCanopy","Enable Simple Canopy Model",value=TRUE)
+                    radioButtons("selModel","Select Profile",choices=list("Both","Albini Baughman","Massman Forthofer"),
+                                 selected="Both",inline=TRUE)
                     )
            ),
            br()
@@ -80,13 +90,19 @@ shinyUI(fluidPage(theme=shinytheme("cosmo"),
           br(),
           hr(),
           verbatimTextOutput("crapInputs"),
+          # withSpinner(
           verbatimTextOutput("adjustedSpeed")
+          # )
+          # uiOutput("renderVtext")
 
          ),
       column(4,
              # plotOutput("logWindPlot")
              h4("Wind Profile"),
-             scatterD3Output("logWindPlot")
+             # uiOutput("renderScat")
+             withSpinner(
+             scatterD3Output("logWindPlot"),type=4
+             )
         
       )
     

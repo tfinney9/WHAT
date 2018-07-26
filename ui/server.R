@@ -7,6 +7,8 @@
 library(shiny)
 library(shinyjs)
 library(scatterD3)
+library(shinyBS)
+library(shinycssloaders)
 
 
 #deploy Paths
@@ -24,13 +26,14 @@ shinyServer(function(input,output,session){
   
   #Sanity Checks, everything must be filled out or it will grey out the button
   observe({
-    if(is.numeric(input$wind_speed)==FALSE || is.numeric(input$init_hgt)==FALSE || is.numeric(input$canopy)==FALSE || is.numeric(input$height)==FALSE)
+    shinyjs::disable("selModel")
+    if(is.numeric(input$wind_speed)==FALSE || is.numeric(input$init_hgt)==FALSE || is.numeric(input$canopy)==FALSE || is.numeric(input$height)==FALSE || is.numeric(input$canopy_ratio)==FALSE)
     {
       shinyjs::disable("exec")
       shinyjs::show("crapInputs")
       output$crapInputs<-renderPrint("Invalid Inputs")
     }
-    if(is.numeric(input$wind_speed)==TRUE && is.numeric(input$init_hgt)==TRUE && is.numeric(input$canopy)==TRUE  && is.numeric(input$height)==TRUE)
+    if(is.numeric(input$wind_speed)==TRUE && is.numeric(input$init_hgt)==TRUE && is.numeric(input$canopy)==TRUE  && is.numeric(input$height)==TRUE && is.numeric(input$canopy_ratio)==TRUE)
     {
       # output$crapInputs<-renderPrint("")
       shinyjs::hide("crapInputs")
@@ -38,11 +41,10 @@ shinyServer(function(input,output,session){
     }
   })
   
-
   observeEvent(input$exec,
                {
                  print(input$simpleCanopy)
-                 gArgs=paste("\"",input$wind_speed,"\" \"",input$spd_units,"\" \"",input$surface,"\" \"",input$init_hgt,"\" \"",input$height,"\" \"",input$canopy,"\" \"",input$hght_units,"\" \"",input$simpleCanopy,"\"",sep="")
+                 gArgs=paste("\"",input$wind_speed,"\" \"",input$spd_units,"\" \"",input$surface,"\" \"",input$init_hgt,"\" \"",input$height,"\" \"",input$canopy,"\" \"",input$hght_units,"\" \"",input$canopy_ratio,"\"",sep="")
                  print(gArgs)
                  runFile<-system2(command=runPath,args=gArgs,stdout=TRUE)
                  print(runFile)
@@ -51,8 +53,6 @@ shinyServer(function(input,output,session){
                  
                  point_x<-as.double(outDat[[1]][5])
                  point_y<-as.double(outDat[[1]][7])
-                 
-                 
                  
                  plotData<-read.csv(file=trimws(outDat[[1]][3]),check.names=FALSE)
                  # plotData<-read.csv(file=trimws("/home/tanner/src/WHAT/backend/data/plots/pDat.csv"),check.names=FALSE)
