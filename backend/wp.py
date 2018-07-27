@@ -193,7 +193,7 @@ def canopyFlowMulti_uz(outHeight,path,uz_1,z1,canopy_height,z0g,LAI,Cd,CR,spdUni
     uz_native=calcUnits.convertToJiveUnits(uz_i,spdUnits) #convert each thing back to local units
     return uz_native
 
-def canopyFlow_uz(z2,uz_1,z1,canopy_height,path,z0g,LAI,Cd,CR,dataPath,unitSet,optMulti):
+def canopyFlow_uz(uz_1,z1,z2,canopy_height,path,z0g,LAI,Cd,CR,dataPath,unitSet,optMulti):
     """
     use the Masserman/Forthofer Canopy Model to 
     generate a wind profile
@@ -260,7 +260,9 @@ def canopyFlow_uz(z2,uz_1,z1,canopy_height,path,z0g,LAI,Cd,CR,dataPath,unitSet,o
             
     if optMulti==True:
         pool = ThreadPool(len(zArray))
-        component = partial(canopyFlowMulti_uz,path=path,uz_1=uz_1,z1=z1,canopy_height=canopy_height,z0g=z0g,LAI=LAI,Cd=Cd,CR=CR,spdUnits=unitSet[0])
+        component = partial(canopyFlowMulti_uz,path=path,uz_1=uz_1,
+                            z1=z1,canopy_height=canopy_height,z0g=z0g,
+                            LAI=LAI,Cd=Cd,CR=CR,spdUnits=unitSet[0])
         result = pool.map(component,zArray)
         pool.close()
         pool.join()

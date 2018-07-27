@@ -63,6 +63,9 @@ def calc_windProfile(inputSpeed,windUnits,inputHeight,outputHeight,canopyHeight,
     return outputWindSpeed,outDataFile    
 
 #start=time.time()
-#calc_windProfile(10,"mph",20,50,100,"ft",0.7,"Spruce")
+#                    is  isu  ih oh  ch  hu  cr   sf
+#x,y=calc_windProfile(10,"mph",20,50,100,"ft",0.7,"Spruce")
+#x,y=calc_windProfile(10,"mph",100,20,65,"ft",0.7,"Spruce")
 #stop=time.time()
 #print(stop-start)
+#print(x)
