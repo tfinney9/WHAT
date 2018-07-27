@@ -12,6 +12,8 @@ import subprocess
 import time
 import calcUnits
 import csv
+from multiprocessing import Pool as ThreadPool
+from functools import partial
 
 class windProfile():
     """
@@ -44,6 +46,8 @@ class windProfile():
     speedUnits="mps"
     manualCanopy=False
     dumpCanopy=0.0
+    
+    useMutliProc=False
     
     def set_InputWindSpeed(self,wspd,ws_units):
         self.inputWindSpeed=calcUnits.convertFromJiveUnits(wspd,ws_units)
@@ -114,7 +118,8 @@ class windProfile():
                                                                              self.crownRatio,
                                                                              self.PlotDataPath,
                                                                              [self.speedUnits,
-                                                                              self.heightUnits])
+                                                                              self.heightUnits],
+                                                                              self.useMutliProc)
                                           
     def writeLogText(self):
         f_msg="Inputs:\nWindSpeed: "+str(self.get_InputWindSpeed(self.speedUnits))+" "+self.speedUnits+\
@@ -170,8 +175,25 @@ def getSurfaceProperties(surface,surfacePath):
     f.close()
     return sDat[sLoc[0]][0][0],sDat[sLoc[0]][0][1],sDat[sLoc[0]][0][2],sDat[sLoc[0]][0][3]
 
+def canopyFlowMulti_uz(outHeight,path,uz_1,z1,canopy_height,z0g,LAI,Cd,CR,spdUnits):
+    """
+    Multiprocessing option for plotting
+    """
+    commandList = [str(path),str(uz_1),str(z1),str(outHeight),str(canopy_height),str(z0g),str(LAI),str(Cd),str(CR)]
+    CF_out = subprocess.check_output(commandList) #solve for the height
+    CF_out=CF_out.decode()
+    ai=CF_out.find("-:")
+    fi=CF_out.find(":-")
+    try:
+        uz_i = float(CF_out[ai+2:fi])    #try to cast as float
+    except:
+        uz_i = 0.0 #this probably means its nan and therefore just throw a zero
+        pass
 
-def canopyFlow_uz(uz_1,z1,z2,canopy_height,path,z0g,LAI,Cd,CR,dataPath,unitSet):
+    uz_native=calcUnits.convertToJiveUnits(uz_i,spdUnits) #convert each thing back to local units
+    return uz_native
+
+def canopyFlow_uz(z2,uz_1,z1,canopy_height,path,z0g,LAI,Cd,CR,dataPath,unitSet,optMulti):
     """
     use the Masserman/Forthofer Canopy Model to 
     generate a wind profile
@@ -211,28 +233,45 @@ def canopyFlow_uz(uz_1,z1,z2,canopy_height,path,z0g,LAI,Cd,CR,dataPath,unitSet):
         zMax=canopy_height #else just use the canopy
     
     zArray = numpy.linspace(0,2*int(zMax)) #generate an array
-    for i in range(len(zArray)):
-        commandList = [str(path),str(uz_1),str(z1),str(zArray[i]),str(canopy_height),str(z0g),str(LAI),str(Cd),str(CR)]
-        CF_out = subprocess.check_output(commandList) #solve for each height
-        CF_out=CF_out.decode()
-        ai=CF_out.find("-:")
-        fi=CF_out.find(":-")
-        try:
-            uz_i = float(CF_out[ai+2:fi])    #try to cast as float
-        except:
-            uz_i = 0.0 #this probably means its nan and therefore just throw a zero
-            pass
-        if uz_i<0:
-            continue
-        if numpy.isnan(uz_i)==True:
-            continue
+    
+    if optMulti==False:
+        for i in range(len(zArray)):
+            commandList = [str(path),str(uz_1),str(z1),str(zArray[i]),str(canopy_height),str(z0g),str(LAI),str(Cd),str(CR)]
+            CF_out = subprocess.check_output(commandList) #solve for each height
+            CF_out=CF_out.decode()
+            ai=CF_out.find("-:")
+            fi=CF_out.find(":-")
+            try:
+                uz_i = float(CF_out[ai+2:fi])    #try to cast as float
+            except:
+                uz_i = 0.0 #this probably means its nan and therefore just throw a zero
+                pass
+            if uz_i<0:
+                continue
+            if numpy.isnan(uz_i)==True:
+                continue
+            
+            uz_native=calcUnits.convertToJiveUnits(uz_i,unitSet[0]) #convert each thing back to local units
+            hg_native=calcUnits.distFromMetric(zArray[i],unitSet[1])
+            ff.write(str(uz_native))
+            ff.write(",")
+            ff.write(str(hg_native))
+            ff.write("\n")
+            
+    if optMulti==True:
+        pool = ThreadPool(len(zArray))
+        component = partial(canopyFlowMulti_uz,path=path,uz_1=uz_1,z1=z1,canopy_height=canopy_height,z0g=z0g,LAI=LAI,Cd=Cd,CR=CR,spdUnits=unitSet[0])
+        result = pool.map(component,zArray)
+        pool.close()
+        pool.join()
         
-        uz_native=calcUnits.convertToJiveUnits(uz_i,unitSet[0]) #convert each thing back to local units
-        hg_native=calcUnits.distFromMetric(zArray[i],unitSet[1])
-        ff.write(str(uz_native))
-        ff.write(",")
-        ff.write(str(hg_native))
-        ff.write("\n")
+        for i in range(len(zArray)):
+            hg_native=calcUnits.distFromMetric(zArray[i],unitSet[1])
+            ff.write(str(result[i]))
+            ff.write(",")
+            ff.write(str(hg_native))
+            ff.write("\n")
+                
         
     #write the inputs and specific outputs so that the user knows we did what they asked    
     nativeCF_spd = calcUnits.convertToJiveUnits(CF_spd,unitSet[0])

@@ -53,7 +53,7 @@ shinyServer(function(input,output,session){
                  
                  point_x<-as.double(outDat[[1]][5])
                  point_y<-as.double(outDat[[1]][7])
-                 
+
                  plotData<-read.csv(file=trimws(outDat[[1]][3]),check.names=FALSE)
                  # plotData<-read.csv(file=trimws("/home/tanner/src/WHAT/backend/data/plots/pDat.csv"),check.names=FALSE)
                 #  output$logWindPlot<-renderPlot({
@@ -70,7 +70,12 @@ shinyServer(function(input,output,session){
                      ylab=colnames(plotData)[2],
                      col_var=plotData[[3]],
                      col_lab="Info",
-                     legend_width = 0
+                     legend_width = 0,
+                     lines = data.frame(slope = c(0, Inf,0,0), 
+                                        intercept = c(0, 0,input$canopy,(input$canopy*(1-input$canopy_ratio))),
+                                        stroke = c("#000","#000","green","green"),
+                                        stroke_width = c(1,1,2,2),
+                                        stroke_dasharray = c(5,5,0,0))
                    )
                  })
                  

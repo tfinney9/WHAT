@@ -9,7 +9,7 @@ Wrapper for wp.py for use with either the CLI or Shiny-gui
 
 import wp
 import getpass
-
+import time
 #Dev Paths
 if getpass.getuser()=='tanner': 
     logPath = "/home/tanner/src/WHAT/backend/log/"
@@ -43,6 +43,7 @@ def calc_windProfile(inputSpeed,windUnits,inputHeight,outputHeight,canopyHeight,
     """
     #Set up the wind profile  
     wind=wp.windProfile()
+    wind.useMutliProc=True
     wind.set_InputWindSpeed(inputSpeed,windUnits)
     wind.set_InputWindHeight(inputHeight,heightUnits)
     wind.set_OutputWindHeight(outputHeight,heightUnits)
@@ -61,5 +62,7 @@ def calc_windProfile(inputSpeed,windUnits,inputHeight,outputHeight,canopyHeight,
     writeLogFile(wind.writeLogText())          
     return outputWindSpeed,outDataFile    
 
-
+#start=time.time()
 #calc_windProfile(10,"mph",20,50,100,"ft",0.7,"Spruce")
+#stop=time.time()
+#print(stop-start)

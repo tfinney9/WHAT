@@ -37,7 +37,8 @@ shinyUI(fluidPage(theme=shinytheme("cosmo"),
            wellPanel(
              fluidRow(
            column(4,
-           numericInput("wind_speed",label="Enter Wind Speed",value=10,min=0,max=1000)
+           numericInput("wind_speed",label="Enter Wind Speed",value=10,min=0,max=1000),
+           bsTooltip("wind_speed","Input Known Wind Speed",placement="bottom",trigger="hover")
                   ),
            column(4,
                   selectizeInput("spd_units",label="Wind Speed Units",choices=list("miles per hour (mph)"="mph",
@@ -47,9 +48,9 @@ shinyUI(fluidPage(theme=shinytheme("cosmo"),
                                                                                    "furlongs per fortnight"="fpf"))
                   ),
            column(4,
-                  numericInput("init_hgt",label="Wind Speed Height (AGL)",value=5,min=0,max=1000)
-                  ),
-           bsTooltip("init_hgt","Height Above Ground Level",placement = "bottom",trigger="hover")
+                  numericInput("init_hgt",label="Wind Speed Height (AGL)",value=5,min=0,max=1000),
+                  bsTooltip("init_hgt","Input Height Above Ground Level",placement = "bottom",trigger="hover")
+                  )
            ),
            hr(),
            fluidRow(
@@ -67,7 +68,8 @@ shinyUI(fluidPage(theme=shinytheme("cosmo"),
            hr(),
            fluidRow(
            column(8,
-           numericInput("height",label="Enter Output Wind Height (Above Ground Level)",value=100,min=0,max=1000)
+           numericInput("height",label="Enter Output Wind Height (Above Ground Level)",value=100,min=0,max=1000),
+           bsTooltip("height","Height Above Ground Level",placement = "bottom",trigger="hover")
            ),
            column(4,
                   selectizeInput("hght_units","Height Units",choices=list("feet (ft)"="ft",
@@ -82,6 +84,7 @@ shinyUI(fluidPage(theme=shinytheme("cosmo"),
                     # checkboxInput("simpleCanopy","Enable Simple Canopy Model",value=TRUE)
                     radioButtons("selModel","Select Profile",choices=list("Both","Albini Baughman","Massman Forthofer"),
                                  selected="Both",inline=TRUE)
+                    # bsTooltip("selModel","Albini Baughman: Uses a uniform wind profile within the canopy\nTest",placement = "bottom",trigger="hover")
                     )
            ),
            br()
