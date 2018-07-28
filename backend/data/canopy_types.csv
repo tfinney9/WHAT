@@ -1,9 +1,11 @@
-Canopy_type,h,LAI,Cd
-Aspen,10,3.28,0.2
-Scots Pine,20,2.41,0.25
-Jack Pine,15,2.14,0.2
-Loblolly Pine,24,3.78,0.2
-Hardwood,22.5,4.93,0.15
-Spruce,10,5.73,0.2
-Corn,2.2,2.94,0.3
-Rice,0.73,3.1,0.3
+Canopy_type,h,LAI,Cd,z0
+Aspen,10,3.28,0.2,2
+Scots Pine,20,2.41,0.25,1.5
+Jack Pine,15,2.14,0.2,1.5
+Loblolly Pine,24,3.78,0.2,1.5
+Hardwood,22.5,4.93,0.15,2
+Spruce,10,5.73,0.2,1.5
+Corn,2.2,2.94,0.3,0.08
+Rice,0.73,3.1,0.3,0.08
+Barren,0.1,0.1,0.01,0.05
+Shrubs,0.7,2,0.3,0.15

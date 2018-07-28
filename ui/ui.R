@@ -82,8 +82,8 @@ shinyUI(fluidPage(theme=shinytheme("cosmo"),
            fluidRow(
              column(12,
                     # checkboxInput("simpleCanopy","Enable Simple Canopy Model",value=TRUE)
-                    radioButtons("selModel","Select Profile",choices=list("Both","Albini Baughman","Massman Forthofer"),
-                                 selected="Both",inline=TRUE)
+                    radioButtons("selModel","Select Model",choices=list("Massman","Albini","Both"),
+                                 selected="Massman",inline=TRUE)
                     # bsTooltip("selModel","Albini Baughman: Uses a uniform wind profile within the canopy\nTest",placement = "bottom",trigger="hover")
                     )
            ),

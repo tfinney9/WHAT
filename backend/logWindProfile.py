@@ -22,6 +22,7 @@ arg_canopy=float(sys.argv[6])
 arg_hgtUnits=str(sys.argv[7])
 arg_SCM=str(sys.argv[8])
 arg_crownRatio = str(sys.argv[8])
+arg_MODEL = str(sys.argv[9])
 
 if  use_crap==True:
     """
@@ -84,8 +85,39 @@ else:
                                                                      arg_canopy,
                                                                      arg_hgtUnits,
                                                                      arg_crownRatio,
-                                                                     arg_surface)
-                                     
-    print(round(heightAdjustedSpeed,2),arg_spdUnits,"at",
-    arg_height,arg_hgtUnits,":|:",dataFileName,":|:",
-    heightAdjustedSpeed,":|:",arg_height)
+                                                                     arg_surface,
+                                                                     arg_MODEL)
+                 
+#     outStr = "Calculated Wind Speed: Massman Model: "  
+    hStr = "Calculated Wind Speed: " 
+    delim=";"                                                             
+    massmanStr=":"
+    albiniStr=":"
+    
+    mPathStr=delim+"X"    
+    aPathStr=delim+"X"
+    
+    mbStr=delim+"X"
+    abStr=delim+"X"
+    if(heightAdjustedSpeed[0]!="NAN"):
+        massmanStr = "Massman Model: "+str(round(heightAdjustedSpeed[0],2))+" "+str(arg_spdUnits)+\
+        " at "+str(arg_height)+" "+str(arg_hgtUnits)+" "
+        
+        mPathStr=delim+dataFileName[0]
+        
+        mbStr=delim+str(heightAdjustedSpeed[0])+delim+str(arg_height)
+        
+    if(heightAdjustedSpeed[1]!="NAN"):
+        albiniStr = "Albini Model: "+str(round(heightAdjustedSpeed[1],2))+" "+str(arg_spdUnits)+\
+        " at "+str(arg_height)+" "+str(arg_hgtUnits)+" " 
+        
+        aPathStr=delim+dataFileName[1]
+        
+        abStr=delim+str(heightAdjustedSpeed[1])+delim+str(arg_height)
+
+    outStr = hStr+massmanStr+albiniStr+mPathStr+aPathStr+mbStr+abStr
+    print(outStr)
+        
+#    print(round(heightAdjustedSpeed,2),arg_spdUnits,"at",
+#    arg_height,arg_hgtUnits,":|:",dataFileName,":|:",
+#    heightAdjustedSpeed,":|:",arg_height)

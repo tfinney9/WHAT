@@ -10,44 +10,63 @@ Wind Profile Important stuff
 import numpy
 import subprocess
 import time
-import calcUnits
 import csv
 from multiprocessing import Pool as ThreadPool
 from functools import partial
+
+#localLibraries
+import calcUnits
+import albini
+#==================================================================================
+# Wind Profile Class
+#==================================================================================
 
 class windProfile():
     """
     Generate a wind Profile
     Inputs and paths must be set
     """
+    #Paths etc
     status_msg=""
     profile="stable"
     canopyFlowPath=""
     PlotDataPath=""    
-    PlotDataFile=""    
     surfaceDataFile=""
     
+    #inputs
     inputWindSpeed = 0.0 #meters per second
     inputWindHeight = 0.0  #meters
-    surfaceRoughess = 0.0 #meters z0
     surface = ""
-    zpd = 0.0 #Zero Plane Displacement rough_d
     canopy_height = 0.0 #rough_h   
     outputWindHeight = 0.0
-    outputWindSpeed = 0.0
-    inWindHeight=(inputWindHeight+canopy_height)-zpd
     
+    #Outputs
+    outputWindSpeed = 0.0 #Massman Out
+    a_outputWindSpeed = 0.0 #Albini Out
+    PlotDataFile=""   #Massman File  
+    a_PlotDataFile="" #Albini File
+    
+    
+    #Not Used Right Now
+    zpd = 0.0 #Zero Plane Displacement rough_d
+    inWindHeight=(inputWindHeight+canopy_height)-zpd
+
+    #Tabulated Properties
+    surfaceRoughess = 0.0 #This is the rougness of the canopy, used for lwp not for canopy-flow z0 (meters)
     leafAreaIndex = 3.28 #This is the number of leaves you hit on your way down
-    dragCoeff = 0.20
-    crownRatio = 0.7 
+    dragCoeff = 0.20 #Drag Coefficient of the Canopy
+    crownRatio = 0.7 #Amount of the "Tree/Vegetation" that is canopy vs stem
     subCanopyRoughness = 0.0075 #This is the roughness of the ground below the canopy   
     
+    #Other Stuff that is important
     heightUnits="m"
     speedUnits="mps"
-    manualCanopy=False
-    dumpCanopy=0.0
-    
-    useMutliProc=False
+    dumpCanopy=0.0 #dump the canopy height on disk here if we don't need it
+
+    #Control Options
+    manualCanopy=False #if the user specifies a canopy (always will)
+    useMutliProc=False #Use Multiprocessing
+    useBuiltInOpt=False #Use a looping feature built into canopy-flow
     
     def set_InputWindSpeed(self,wspd,ws_units):
         self.inputWindSpeed=calcUnits.convertFromJiveUnits(wspd,ws_units)
@@ -68,9 +87,9 @@ class windProfile():
         
     def set_surface(self,surface):
         if self.manualCanopy==False:
-            self.surface,self.canopy_height,self.leafAreaIndex,self.dragCoeff = getSurfaceProperties(surface,self.surfaceDataFile)
+            self.surface,self.canopy_height,self.leafAreaIndex,self.dragCoeff,self.surfaceRoughess = getSurfaceProperties(surface,self.surfaceDataFile)
         else:
-            self.surface,self.dumpCanopy,self.leafAreaIndex,self.dragCoeff = getSurfaceProperties(surface,self.surfaceDataFile)
+            self.surface,self.dumpCanopy,self.leafAreaIndex,self.dragCoeff,self.surfaceRoughess = getSurfaceProperties(surface,self.surfaceDataFile)
             
     def get_InputWindSpeed(self,ws_units):
         return calcUnits.convertToJiveUnits(self.inputWindSpeed,ws_units)
@@ -87,6 +106,9 @@ class windProfile():
     def get_OutputWindSpeed(self,ws_units):
         return calcUnits.convertToJiveUnits(self.outputWindSpeed,ws_units)
         
+    def get_aOutputWindSpeed(self,ws_units):
+        return calcUnits.convertToJiveUnits(self.a_outputWindSpeed,ws_units)
+        
         
     def tpn_uz(self):
         """
@@ -99,13 +121,21 @@ class windProfile():
                                                   self.zpd)
     def a_uz(self):
         """
-        use the Albini canopy model
+        use the Albini canopy model (see albini_uz())
         """
-        self.outputWindSpeed=self.outputWindSpeed
+        self.a_outputWindSpeed,self.a_PlotDataFile = albini_uz_Wrapper(self.inputWindSpeed,
+                                                                   self.inputWindHeight,
+                                                                   self.outputWindHeight,
+                                                                   self.canopy_height,
+                                                                   self.crownRatio,
+                                                                   self.surfaceRoughess,
+                                                                   self.PlotDataPath,
+                                                                   [self.speedUnits,
+                                                                    self.heightUnits])
         
     def cf_uz(self):
         """
-        use the Masserman canopy model
+        Use the Massman canopy model (see canopyFlow_uz())
         """
         self.outputWindSpeed,self.PlotDataFile,self.status_msg = canopyFlow_uz(self.inputWindSpeed,
                                                                              self.inputWindHeight,
@@ -134,34 +164,10 @@ class windProfile():
         f_msg+="Outputs:\n"
         f_msg+="Out Speed: "+str(self.get_OutputWindSpeed(self.speedUnits))+" "+self.speedUnits+"\n"
         return f_msg
-
-                                                             
-
- 
-def twoPointNeutral_uz(uz_1,z1,z2,z0,d):
-    """
-    uz_2 = velocity at z=z2
-    uz_1 = velocity at z=z1
-    d = zero plane displacement (meters)
-    z0 = surface roughness (meters)
-    """     
-    uz_2 = uz_1*(numpy.log((z2-d)/z0)/(numpy.log((z1-d)/z0)))
-    return uz_2
-
-def getZPD(canopy_height,model):
-    if(model=="three_quaters"):
-        return canopy_height*3./4.
-    if(model=="two_thirds"):
-        return canopy_height*3./4.
-    if(model=="WindNinja"):
-        return canopy_height*0.63 #See Line 3589 in ninja.cpp
-        
-def linear_uz(uz_1,z1,zpd,canopy_height):
-    return 0
-
-def albini_uz():
-    return 0
-
+    
+#==================================================================================
+# General Functions
+#==================================================================================
 def getSurfaceProperties(surface,surfacePath):
     """
     open up the surface properties file and
@@ -173,32 +179,85 @@ def getSurfaceProperties(surface,surfacePath):
     sDat=numpy.array(sDat)
     sLoc=numpy.where(sDat==surface)
     f.close()
-    return sDat[sLoc[0]][0][0],sDat[sLoc[0]][0][1],sDat[sLoc[0]][0][2],sDat[sLoc[0]][0][3]
-
-def canopyFlowMulti_uz(outHeight,path,uz_1,z1,canopy_height,z0g,LAI,Cd,CR,spdUnits):
+    return sDat[sLoc[0]][0][0],float(sDat[sLoc[0]][0][1]),float(sDat[sLoc[0]][0][2]),float(sDat[sLoc[0]][0][3]),float(sDat[sLoc[0]][0][4])
+                       
+def getZPD(canopy_height,model):
     """
-    Multiprocessing option for plotting
+    Calculate the Zero Plane Displacement
     """
-    commandList = [str(path),str(uz_1),str(z1),str(outHeight),str(canopy_height),str(z0g),str(LAI),str(Cd),str(CR)]
-    CF_out = subprocess.check_output(commandList) #solve for the height
-    CF_out=CF_out.decode()
-    ai=CF_out.find("-:")
-    fi=CF_out.find(":-")
-    try:
-        uz_i = float(CF_out[ai+2:fi])    #try to cast as float
-    except:
-        uz_i = 0.0 #this probably means its nan and therefore just throw a zero
-        pass
+    if(model=="three_quaters"):
+        return canopy_height*3./4.
+    if(model=="two_thirds"):
+        return canopy_height*3./4.
+    if(model=="WindNinja"):
+        return canopy_height*0.63 #See Line 3589 in ninja.cpp
+ 
+def twoPointNeutral_uz(uz_1,z1,z2,z0,d):
+    """
+    uz_2 = velocity at z=z2
+    uz_1 = velocity at z=z1
+    d = zero plane displacement (meters)
+    z0 = surface roughness (meters)
+    
+    https://en.wikipedia.org/wiki/Log_wind_profile
+    """     
+    uz_2 = uz_1*(numpy.log((z2-d)/z0)/(numpy.log((z1-d)/z0)))
+    return uz_2       
 
-    uz_native=calcUnits.convertToJiveUnits(uz_i,spdUnits) #convert each thing back to local units
-    return uz_native
+def albini_uz_Wrapper(uz_1,z1,z2,canopy_height,crownRatio,z0c,dataPath,unitSet):
+    """
+    Integreate albini.py into windProfile
+    """
+    uz_2, zArray,uArray = albini.albini_uz(uz_1,z1,z2,canopy_height,crownRatio,z0c)
+    
+    dataFile=dataPath+"pDat-"+str(int(time.time()))+"-1.csv" #Open the datafile
+    ff=open(dataFile,"w")    
+    #write the header
+    x_str = "Wind Speed at z ("+unitSet[0]+"),Height (z) ("+unitSet[1]+"),color\n"        
+    ff.write(x_str)     
+    
+    for i in range(len(zArray)):
+        uz_native=calcUnits.convertToJiveUnits(uArray[i],unitSet[0]) #convert each thing back to local units
+        hg_native=calcUnits.distFromMetric(zArray[i],unitSet[1])
+        ff.write(str(uz_native))
+        ff.write(",")
+        ff.write(str(hg_native))
+        ff.write(",red\n")
+
+    
+    nativeOT_spd = calcUnits.convertToJiveUnits(uz_2,unitSet[0])
+    nativeOT_hgt = calcUnits.distFromMetric(z2,unitSet[1])
+    nativeIN_spd = calcUnits.convertToJiveUnits(uz_1,unitSet[0])
+    nativeIN_hgt = calcUnits.distFromMetric(z1,unitSet[1])
+
+    ff.write(str(nativeOT_spd)) #Out Speed
+    ff.write(",")
+    ff.write(str(nativeOT_hgt)) #Out Height
+    ff.write(",Output\n")
+#    ff.write(",\n")
+    ff.write(str(nativeIN_spd)) #In Speed
+    ff.write(",")
+    ff.write(str(nativeIN_hgt)) #In Height
+    ff.write(",Input\n")
+#    ff.write(",Put\n")
+    ff.close()
+    
+    return uz_2,dataFile
+
 
 def canopyFlow_uz(uz_1,z1,z2,canopy_height,path,z0g,LAI,Cd,CR,dataPath,unitSet,optMulti):
     """
-    use the Masserman/Forthofer Canopy Model to 
-    generate a wind profile
+    Use canopy-flow to generate a wind profile
+    https://github.com/firelab/canopy-flow
+
+    which uses the model detailed in:
+
+    An improved canopy wind model for predicting wind
+    adjustment factors and wildland fire behavior
     
-    Also generate datapoints for plotting
+    W.J. Massman, J.M. Forthofer, and M.A. Finney
+    2017
+    https://www.fs.usda.gov/treesearch/pubs/54040
     """
     commandList = [str(path),str(uz_1),str(z1),str(z2),str(canopy_height),str(z0g),str(LAI),str(Cd),str(CR)]
 #    print(commandList)
@@ -217,7 +276,7 @@ def canopyFlow_uz(uz_1,z1,z2,canopy_height,path,z0g,LAI,Cd,CR,dataPath,unitSet,o
 #    CF_spd = CF_out[ai+2:fi]
     CFMSG=""
     
-    dataFile=dataPath+"pDat-"+str(int(time.time()))+".csv" #Open the datafile
+    dataFile=dataPath+"pDat-"+str(int(time.time()))+"-0.csv" #Open the datafile
     ff=open(dataFile,"w")    
     #write the header
     x_str = "Wind Speed at z ("+unitSet[0]+"),Height (z) ("+unitSet[1]+"),color\n"        
@@ -272,7 +331,7 @@ def canopyFlow_uz(uz_1,z1,z2,canopy_height,path,z0g,LAI,Cd,CR,dataPath,unitSet,o
             ff.write(str(result[i]))
             ff.write(",")
             ff.write(str(hg_native))
-            ff.write("\n")
+            ff.write(",Massman\n")
                 
         
     #write the inputs and specific outputs so that the user knows we did what they asked    
@@ -292,3 +351,22 @@ def canopyFlow_uz(uz_1,z1,z2,canopy_height,path,z0g,LAI,Cd,CR,dataPath,unitSet,o
     ff.close()
     
     return CF_spd,dataFile,CFMSG
+    
+    
+def canopyFlowMulti_uz(outHeight,path,uz_1,z1,canopy_height,z0g,LAI,Cd,CR,spdUnits):
+    """
+    Multiprocessing option for canopy-flow
+    """
+    commandList = [str(path),str(uz_1),str(z1),str(outHeight),str(canopy_height),str(z0g),str(LAI),str(Cd),str(CR)]
+    CF_out = subprocess.check_output(commandList) #solve for the height
+    CF_out=CF_out.decode()
+    ai=CF_out.find("-:")
+    fi=CF_out.find(":-")
+    try:
+        uz_i = float(CF_out[ai+2:fi])    #try to cast as float
+    except:
+        uz_i = 0.0 #this probably means its nan and therefore just throw a zero
+        pass
+
+    uz_native=calcUnits.convertToJiveUnits(uz_i,spdUnits) #convert each thing back to local units
+    return uz_native
