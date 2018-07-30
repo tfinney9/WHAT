@@ -48,7 +48,7 @@ shinyUI(fluidPage(theme=shinytheme("cosmo"),
                                                                                    "furlongs per fortnight"="fpf"))
                   ),
            column(4,
-                  numericInput("init_hgt",label="Wind Speed Height (AGL)",value=5,min=0,max=1000),
+                  numericInput("init_hgt",label="Wind Speed Height (AGL)",value=120,min=0,max=1000),
                   bsTooltip("init_hgt","Input Height Above Ground Level",placement = "bottom",trigger="hover")
                   )
            ),
@@ -59,7 +59,7 @@ shinyUI(fluidPage(theme=shinytheme("cosmo"),
                        c(Choose='',vegData[1]),selectize=TRUE,selected="Aspen")
            ),
            column(4,
-                  numericInput("canopy",label="Enter Canopy Height",value=0,min=0,max=10000)
+                  numericInput("canopy",label="Enter Canopy Height",value=100,min=0,max=10000)
                   ),
            column(4,
                   numericInput("canopy_ratio",label="Enter Canopy Ratio",value=0.7,min=0,max=1)
@@ -68,7 +68,7 @@ shinyUI(fluidPage(theme=shinytheme("cosmo"),
            hr(),
            fluidRow(
            column(8,
-           numericInput("height",label="Enter Output Wind Height (Above Ground Level)",value=100,min=0,max=1000),
+           numericInput("height",label="Enter Output Wind Height (Above Ground Level)",value=10,min=0,max=1000),
            bsTooltip("height","Height Above Ground Level",placement = "bottom",trigger="hover")
            ),
            column(4,
@@ -94,7 +94,8 @@ shinyUI(fluidPage(theme=shinytheme("cosmo"),
           hr(),
           verbatimTextOutput("crapInputs"),
           # withSpinner(
-          verbatimTextOutput("adjustedSpeed")
+          # verbatimTextOutput("adjustedSpeed")
+          htmlOutput("adjustedSpeed")
           # )
           # uiOutput("renderVtext")
 

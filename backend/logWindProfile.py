@@ -91,8 +91,8 @@ else:
 #     outStr = "Calculated Wind Speed: Massman Model: "  
     hStr = "Calculated Wind Speed: " 
     delim=";"                                                             
-    massmanStr=":"
-    albiniStr=":"
+    massmanStr="Massman: NAN"
+    albiniStr="Albini: NAN"
     
     mPathStr=delim+"X"    
     aPathStr=delim+"X"

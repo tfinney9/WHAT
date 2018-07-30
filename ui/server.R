@@ -63,14 +63,29 @@ shinyServer(function(input,output,session){
                  runFile<-system2(command=runPath,args=gArgs,stdout=TRUE)
                  print(runFile)
                  outDat<-strsplit(runFile,";")
-                 # output$adjustedSpeed<-renderPrint(paste("Calculated wind speed:",outDat[[1]][1]))
-                 output$adjustedSpeed<-renderPrint(outDat[[1]][1])
+                 print(outDat[[1]][1])
                  
-                 # point_x<-as.double(outDat[[1]][5])
-                 # point_y<-as.double(outDat[[1]][7])
+                 # output$adjustedSpeed<-renderPrint(paste("Calculated wind speed:",outDat[[1]][1]))
+                 # output$adjustedSpeed<-renderPrint(outDat[[1]][1])
+                 
+                 hdr<-"Calculated Wind Speed:"
+                 eD<-strsplit(outDat[[1]][1],hdr) #split off the Header for organization
+                 oD<-strsplit(eD[[1]][2],"Albini") #split off the albini model if it exists
+                  
+                 massmanStr<-paste(oD[[1]][1]) #set the massman str for organization
+                 albiniStr<-paste("Albini",oD[[1]][2],sep="") #set the albini str
+                 
+                 output$adjustedSpeed<-renderUI({wellPanel(
+                   HTML(paste(hdr,massmanStr,albiniStr,sep="<br/>")) #paste these strings with breaks, so it looks nice
+                   )
+                   })
+                 
+                 #this figures out which dataset to use depending on what is returned
+                 which<-"BOTH"
                  if(outDat[[1]][2]=="X")
                  {
                    plotData<-read.csv(defaultPath,check.names=FALSE)
+                   which<-"NM"
                  }
                  else
                  {
@@ -80,11 +95,30 @@ shinyServer(function(input,output,session){
                  if(outDat[[1]][3]=="X")
                  {
                    aPlotData<-read.csv(defaultPath,check.names=FALSE)
+                   which<-"NA"
                  }
                  else
                  {
                    aPlotData<-read.csv(file=trimws(outDat[[1]][3]),check.names=FALSE)
                  }
+                 
+                 #this figures out which color set to use, if one of the models is turned off
+                 if(which=="BOTH")
+                 {
+                   colorDS<-unlist(list(aPlotData[[4]],plotData[[4]]))
+                 }
+                 if(which=="NA")
+                 {
+                   colorDS<-unlist(list(plotData[[4]]))
+                 }
+                 if(which=="NM")
+                 {
+                   colorDS<-unlist(list(aPlotData[[4]]))
+                 }
+                 # else
+                 # {
+                 #   colorDS<-unlist(list(aPlotData[[4]],plotData[[4]]))
+                 # }
                  # plotData<-read.csv(file=trimws("/home/tanner/src/WHAT/backend/data/plots/pDat.csv"),check.names=FALSE)
                 #  output$logWindPlot<-renderPlot({
                 #    plot(plotData,type="l",col="blue",lwd=2)
@@ -94,17 +128,19 @@ shinyServer(function(input,output,session){
                 # })
                  output$logWindPlot<-renderScatterD3({
                    scatterD3(
-                     x = c(plotData[[1]],aPlotData[[1]]),
-                     y = c(plotData[[2]],aPlotData[[2]]),
+                     x = c(aPlotData[[1]],plotData[[1]]),
+                     y = c(aPlotData[[2]],plotData[[2]]),
                      xlab=colnames(plotData)[1],
                      ylab=colnames(plotData)[2],
-                     col_var=c(plotData[[3]],aPlotData[[3]]),
-                     # colors=c("blue","red"),
+                     #0==Input, 1==Output, 2==Massman Plot, 3 == Albini
+                     col_var=colorDS,
+                     colors=c("Massman"="#546E7A","Input"= "#FB8C00","Output"="#F44336","Albini"="#2196F3"),
+                     # colors=c("2"="#546E7A","0"= "#FB8C00","1"="#F44336","3"="#2196F3"),
                      col_lab="Info",
                      legend_width = 0,
                      lines = data.frame(slope = c(0, Inf,0,0), 
                                         intercept = c(0, 0,input$canopy,(input$canopy*(1-input$canopy_ratio))),
-                                        stroke = c("#000","#000","brown","brown"),
+                                        stroke = c("#000","#000","green","green"),
                                         stroke_width = c(1,1,2,2),
                                         stroke_dasharray = c(5,5,0,0))
                    )

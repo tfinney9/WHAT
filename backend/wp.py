@@ -29,10 +29,11 @@ class windProfile():
     #Paths etc
     status_msg=""
     profile="stable"
+    dataPath=""
     canopyFlowPath=""
     PlotDataPath=""    
     surfaceDataFile=""
-    
+
     #inputs
     inputWindSpeed = 0.0 #meters per second
     inputWindHeight = 0.0  #meters
@@ -68,6 +69,22 @@ class windProfile():
     useMutliProc=False #Use Multiprocessing
     useBuiltInOpt=False #Use a looping feature built into canopy-flow
     
+    def set_paths(self,generalDataPath,canopyFlowPath):
+        """
+        Set the data paths for the entire thing to work
+        NEED:
+        generalDataPat: this points to ~/whatever/WHAT/backend/data/
+        or something else as long as it properly configured
+        
+        canopyFlowPath: this points to where the canopy-flow
+        program is compiled, must point to an executable
+        or Massman won't work
+        """
+        self.dataPath = generalDataPath
+        self.PlotDataPath = generalDataPath+"plots/"
+        self.surfaceDataFile = generalDataPath+"canopy_types.csv"
+        self.canopyFlowPath = canopyFlowPath
+        
     def set_InputWindSpeed(self,wspd,ws_units):
         self.inputWindSpeed=calcUnits.convertFromJiveUnits(wspd,ws_units)
         self.speedUnits=ws_units
@@ -137,19 +154,20 @@ class windProfile():
         """
         Use the Massman canopy model (see canopyFlow_uz())
         """
-        self.outputWindSpeed,self.PlotDataFile,self.status_msg = canopyFlow_uz(self.inputWindSpeed,
-                                                                             self.inputWindHeight,
-                                                                             self.outputWindHeight,
-                                                                             self.canopy_height,
-                                                                             self.canopyFlowPath,
-                                                                             self.subCanopyRoughness,
-                                                                             self.leafAreaIndex,
-                                                                             self.dragCoeff,
-                                                                             self.crownRatio,
-                                                                             self.PlotDataPath,
-                                                                             [self.speedUnits,
-                                                                              self.heightUnits],
-                                                                              self.useMutliProc)
+        self.outputWindSpeed,self.PlotDataFile,self.status_msg = canopyFlow_uz(self.canopyFlowPath,
+                                                                               self.dataPath,
+                                                                               self.PlotDataPath,
+                                                                               self.inputWindSpeed,
+                                                                               self.inputWindHeight,
+                                                                               self.outputWindHeight,
+                                                                               self.canopy_height,
+                                                                               self.subCanopyRoughness,
+                                                                               self.leafAreaIndex,
+                                                                               self.dragCoeff,
+                                                                               self.crownRatio,
+                                                                               [self.speedUnits,
+                                                                                self.heightUnits])
+                                                                               
                                           
     def writeLogText(self):
         f_msg="Inputs:\nWindSpeed: "+str(self.get_InputWindSpeed(self.speedUnits))+" "+self.speedUnits+\
@@ -209,11 +227,14 @@ def albini_uz_Wrapper(uz_1,z1,z2,canopy_height,crownRatio,z0c,dataPath,unitSet):
     Integreate albini.py into windProfile
     """
     uz_2, zArray,uArray = albini.albini_uz(uz_1,z1,z2,canopy_height,crownRatio,z0c)
-    
+    namedList=["Albini","Input","Output"]
+    colorList=["3","0","1"]
+
     dataFile=dataPath+"pDat-"+str(int(time.time()))+"-1.csv" #Open the datafile
     ff=open(dataFile,"w")    
     #write the header
-    x_str = "Wind Speed at z ("+unitSet[0]+"),Height (z) ("+unitSet[1]+"),color\n"        
+#    x_str = "Wind Speed at z ("+unitSet[0]+"),Height (z) ("+unitSet[1]+"),color\n" 
+    x_str = "Wind Speed at z ("+unitSet[0]+"),Height (z) ("+unitSet[1]+"),color,name\n"               
     ff.write(x_str)     
     
     for i in range(len(zArray)):
@@ -222,7 +243,9 @@ def albini_uz_Wrapper(uz_1,z1,z2,canopy_height,crownRatio,z0c,dataPath,unitSet):
         ff.write(str(uz_native))
         ff.write(",")
         ff.write(str(hg_native))
-        ff.write(",red\n")
+#        ff.write(",%s\n"%colorList[0])
+        ff.write(",%s,%s\n"%(colorList[0], namedList[0]))
+
 
     
     nativeOT_spd = calcUnits.convertToJiveUnits(uz_2,unitSet[0])
@@ -233,19 +256,18 @@ def albini_uz_Wrapper(uz_1,z1,z2,canopy_height,crownRatio,z0c,dataPath,unitSet):
     ff.write(str(nativeOT_spd)) #Out Speed
     ff.write(",")
     ff.write(str(nativeOT_hgt)) #Out Height
-    ff.write(",Output\n")
-#    ff.write(",\n")
+#    ff.write(",%s\n"%colorList[2])
+    ff.write(",%s,%s\n"%(colorList[2], namedList[2]))
     ff.write(str(nativeIN_spd)) #In Speed
     ff.write(",")
     ff.write(str(nativeIN_hgt)) #In Height
-    ff.write(",Input\n")
-#    ff.write(",Put\n")
+#    ff.write(",%s\n"%colorList[1])
+    ff.write(",%s,%s\n"%(colorList[1], namedList[1]))
     ff.close()
     
     return uz_2,dataFile
 
-
-def canopyFlow_uz(uz_1,z1,z2,canopy_height,path,z0g,LAI,Cd,CR,dataPath,unitSet,optMulti):
+def canopyFlow_uz(canopyFlowPath,canopyFlowDataPath,plotDataPath,uz_1,z1,z2,canopy_height,z0g,LAI,Cd,CR,unitSet):
     """
     Use canopy-flow to generate a wind profile
     https://github.com/firelab/canopy-flow
@@ -259,30 +281,26 @@ def canopyFlow_uz(uz_1,z1,z2,canopy_height,path,z0g,LAI,Cd,CR,dataPath,unitSet,o
     2017
     https://www.fs.usda.gov/treesearch/pubs/54040
     """
-    commandList = [str(path),str(uz_1),str(z1),str(z2),str(canopy_height),str(z0g),str(LAI),str(Cd),str(CR)]
-#    print(commandList)
-    CF_out = subprocess.check_output(commandList) #Solve for the requested height
-    CF_out=CF_out.decode()
-    
-    ai=CF_out.find("-:")
-    fi=CF_out.find(":-")
-#    print(CF_out)
-    try:
-        CF_spd = float(CF_out[ai+2:fi]) #find that height in the output
-    except:
-        CF_spd=0.0
-        pass
-    
-#    CF_spd = CF_out[ai+2:fi]
+    namedList=["Massman","Input","Output"]
+#    colorList=["Yellow","Yellow","green"]
+    colorList=["2","0","1"]
+
+
     CFMSG=""
     
-    dataFile=dataPath+"pDat-"+str(int(time.time()))+"-0.csv" #Open the datafile
+    dataFile=plotDataPath+"pDat-"+str(int(time.time()))+"-0.csv" #Open the datafile
     ff=open(dataFile,"w")    
     #write the header
-    x_str = "Wind Speed at z ("+unitSet[0]+"),Height (z) ("+unitSet[1]+"),color\n"        
+#    x_str = "Wind Speed at z ("+unitSet[0]+"),Height (z) ("+unitSet[1]+"),color\n"     
+    x_str = "Wind Speed at z ("+unitSet[0]+"),Height (z) ("+unitSet[1]+"),color,name\n"        
     ff.write(x_str)
     
-    #Generate an Array of heights to iterate over
+#==============================#
+# Figure out the max
+# profile height
+# and then double it
+#==============================#
+
     zMax=canopy_height #figure out the range over which to generate a plot
     if(z2>=z1):
         zMax=z2 #use out height if its bigger
@@ -290,50 +308,28 @@ def canopyFlow_uz(uz_1,z1,z2,canopy_height,path,z0g,LAI,Cd,CR,dataPath,unitSet,o
         zMax=z1 #use in height if its bigger
     if(canopy_height>z1 and canopy_height>z2):
         zMax=canopy_height #else just use the canopy
-    
     zArray = numpy.linspace(0,2*int(zMax)) #generate an array
     
-    if optMulti==False:
-        for i in range(len(zArray)):
-            commandList = [str(path),str(uz_1),str(z1),str(zArray[i]),str(canopy_height),str(z0g),str(LAI),str(Cd),str(CR)]
-            CF_out = subprocess.check_output(commandList) #solve for each height
-            CF_out=CF_out.decode()
-            ai=CF_out.find("-:")
-            fi=CF_out.find(":-")
-            try:
-                uz_i = float(CF_out[ai+2:fi])    #try to cast as float
-            except:
-                uz_i = 0.0 #this probably means its nan and therefore just throw a zero
-                pass
-            if uz_i<0:
-                continue
-            if numpy.isnan(uz_i)==True:
-                continue
-            
-            uz_native=calcUnits.convertToJiveUnits(uz_i,unitSet[0]) #convert each thing back to local units
-            hg_native=calcUnits.distFromMetric(zArray[i],unitSet[1])
-            ff.write(str(uz_native))
-            ff.write(",")
-            ff.write(str(hg_native))
-            ff.write("\n")
-            
-    if optMulti==True:
-        pool = ThreadPool(len(zArray))
-        component = partial(canopyFlowMulti_uz,path=path,uz_1=uz_1,
-                            z1=z1,canopy_height=canopy_height,z0g=z0g,
-                            LAI=LAI,Cd=Cd,CR=CR,spdUnits=unitSet[0])
-        result = pool.map(component,zArray)
-        pool.close()
-        pool.join()
-        
-        for i in range(len(zArray)):
-            hg_native=calcUnits.distFromMetric(zArray[i],unitSet[1])
-            ff.write(str(result[i]))
-            ff.write(",")
-            ff.write(str(hg_native))
-            ff.write(",Massman\n")
-                
-        
+#==============================#
+# Solve for the entire profile #
+# Using the  vec method        #
+#==============================#
+    CF_data = canopyFlow_uzArray(canopyFlowPath,canopyFlowDataPath,uz_1,z1,canopy_height,z0g,LAI,Cd,CR,zArray)
+    for i in range(len(CF_data)):
+        uz_native = calcUnits.convertToJiveUnits(CF_data[i],unitSet[0])
+        hg_native=calcUnits.distFromMetric(zArray[i],unitSet[1])
+        ff.write(str(uz_native))
+        ff.write(",")
+        ff.write(str(hg_native))
+#        ff.write(",%s\n"%colorList[0])
+        ff.write(",%s,%s\n"%(colorList[0], namedList[0]))
+
+         
+#==============================#
+# Solve for the user point     #
+# Using the single method      #
+#==============================#   
+    CF_spd = canopyFlow_uzPoint(canopyFlowPath,uz_1,z1,canopy_height,z0g,LAI,Cd,CR,z2)        
     #write the inputs and specific outputs so that the user knows we did what they asked    
     nativeCF_spd = calcUnits.convertToJiveUnits(CF_spd,unitSet[0])
     nativeCF_hgt = calcUnits.distFromMetric(z2,unitSet[1])
@@ -343,11 +339,13 @@ def canopyFlow_uz(uz_1,z1,z2,canopy_height,path,z0g,LAI,Cd,CR,dataPath,unitSet,o
     ff.write(str(nativeCF_spd)) #Out Speed
     ff.write(",")
     ff.write(str(nativeCF_hgt)) #Out Height
-    ff.write(",Output\n")
+#    ff.write(",%s\n"%colorList[2])
+    ff.write(",%s,%s\n"%(colorList[2], namedList[2]))
     ff.write(str(nativeIN_spd)) #In Speed
     ff.write(",")
     ff.write(str(nativeIN_hgt)) #In Height
-    ff.write(",Input\n")
+#    ff.write(",%s\n"%colorList[1])
+    ff.write(",%s,%s\n"%(colorList[1], namedList[1]))
     ff.close()
     
     return CF_spd,dataFile,CFMSG
@@ -370,3 +368,131 @@ def canopyFlowMulti_uz(outHeight,path,uz_1,z1,canopy_height,z0g,LAI,Cd,CR,spdUni
 
     uz_native=calcUnits.convertToJiveUnits(uz_i,spdUnits) #convert each thing back to local units
     return uz_native
+    
+def canopyFlow_uzArray(exec_path,dataPath,uz_1,z1,canopy_height,z0g,LAI,Cd,CR,zArray):
+    """    
+    Use the vector option inside canopy-flow (branch WHAT)
+    write to disk a list of the heights we want
+    tell canopy-flow this path
+    then get a file with the output heights
+    """
+    control_arg = "vec"
+    inFile=dataPath+"zData/cDat-1.csv"       
+    outFile=dataPath+"zData/cDat-2.csv"
+    
+    uzData=[]    #initialize a list
+    
+    with open(inFile,"w") as f: #Write the list of heights we want
+        for i in range(len(zArray)):
+            f.write(str(zArray[i]))
+            f.write("\n")
+        
+    #Generate a list of all the args for canopy-flow
+    command_list=[str(exec_path),control_arg,str(uz_1),str(z1),str(canopy_height),
+                  str(z0g),str(LAI),str(Cd),str(CR),str(inFile),str(outFile)]
+  
+    #run canopy-flow
+    CF_out = subprocess.check_output(command_list)                             
+    CF_out=CF_out.decode()
+    ai=CF_out.find("-:") #find the output
+    fi=CF_out.find(":-")
+    result = CF_out[ai+2:fi]
+    if(result=="Done"): #means that it worked!
+        with open(outFile,"r") as f: #Open the output file
+            fDat = list(csv.reader(f))
+            if(fDat[0][0]=="CanopyFlow output:"): #Must have this, otherwise it didn't work
+                fDat.pop(0) #get rid of the header
+                for i in range(len(fDat)): #iterate over the rest
+                    try:                    
+                        fSubDat=float(fDat[i][0]) #try to cast it as a float, just to be safe
+                    except:
+                        fSubDat=float(0) #if we can't cast it as a float, return a 0
+            
+                    uzData.append(fSubDat) #append to the list
+                
+                return uzData
+            else:
+                return [] #if we fail, return an emtpy list
+    else:
+        return [] #if we really fail, return an empty list
+                
+def canopyFlow_uzPoint(exec_path,uz_1,z1,canopy_height,z0g,LAI,Cd,CR,z2):
+    """
+    Pass a single height to canopy Flow
+    this doesn't use disk, and instead uses a pipe
+    """
+    control_arg = "single"
+
+    command_list=[str(exec_path),control_arg,str(uz_1),str(z1),str(canopy_height),
+                  str(z0g),str(LAI),str(Cd),str(CR),str(z2)]
+                  
+    CF_out = subprocess.check_output(command_list)                             
+    CF_out=CF_out.decode()
+    ai=CF_out.find("-:")
+    fi=CF_out.find(":-")
+    result = CF_out[ai+2:fi]
+    try:
+        result = float(result)
+    except:
+        result = float(0)
+        pass
+    
+    return result   
+    
+    
+##Debug Stuff
+#import matplotlib.pyplot as pyplot    
+    
+#oH = 10 #m
+#path = "/home/tanner/src/canopy/build/canopy_flow"
+#uz_1 = 10 #mps
+#z1 = 120 #m
+#canopy_height = 100 #m
+#z0g = 0.0075 #m
+#LAI = 2.0
+#Cd = 0.20
+#CR = 0.7
+#dataPath = "/home/tanner/src/WHAT/backend/data/" 
+#zArray = numpy.linspace(0,z1*2.0)
+
+#cData = canopyFlow_uzArray(path,uz_1,z1,canopy_height,z0g,LAI,Cd,CR,path,dataPath,zArray)
+#cData = canopyFlow_uzPoint(path,uz_1,z1,canopy_height,z0g,LAI,Cd,CR,path,oH)
+
+#print(cData)
+#pyplot.plot(cData,zArray)
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    

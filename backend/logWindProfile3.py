@@ -15,13 +15,13 @@ if getpass.getuser()=='tanner':
     logPath = "/home/tanner/src/WHAT/backend/log/"
     plotDataPath="/home/tanner/src/WHAT/backend/data/plots/"
     canopyFlowPath="/home/tanner/src/canopy/build/canopy_flow"
-    sDataFile = "/home/tanner/src/WHAT/backend/data/canopy_types.csv"
+    sDataFile = "/home/tanner/src/WHAT/backend/data/"
 #Deploy Paths
 else:
     logPath = "/home/ubuntu/hd2/src/WHAT/ui/log/"
     plotDataPath="/home/ubuntu/hd2/src/WHAT/ui/log/plots/"
     canopyFlowPath="/home/ubuntu/src/canopy/build/canopy_flow"
-    sDataFile = "/home/ubuntu/hd2/src/WHAT/backend/data/canopy_types.csv" #note that if we get more data files
+    sDataFile = "/home/ubuntu/hd2/src/WHAT/backend/data/" #note that if we get more data files
     #change this to generic and specify below
     
 def writeLogFile(com_msg):
@@ -45,15 +45,13 @@ def calc_windProfile(inputSpeed,windUnits,inputHeight,outputHeight,canopyHeight,
     
     #Set up the wind profile  
     wind=wp.windProfile()
+    wind.set_paths(sDataFile,canopyFlowPath)
     wind.useMutliProc=True
     wind.set_InputWindSpeed(float(inputSpeed),windUnits)
     wind.set_InputWindHeight(float(inputHeight),heightUnits)
     wind.set_OutputWindHeight(float(outputHeight),heightUnits)
     wind.set_CanopyHeight(float(canopyHeight),heightUnits)
     wind.crownRatio=float(crownRatio)
-    wind.canopyFlowPath = canopyFlowPath
-    wind.PlotDataPath = plotDataPath
-    wind.surfaceDataFile = sDataFile
     wind.set_surface(surface)
     
 
@@ -83,7 +81,7 @@ def calc_windProfile(inputSpeed,windUnits,inputHeight,outputHeight,canopyHeight,
 
 #start=time.time()
 #                    is  isu  ih oh  ch  hu  cr   sf
-#x,y=calc_windProfile(10,"mph",20,50,100,"ft",0.7,"Spruce")
+#x,y=calc_windProfile(10,"mph",20,50,100,"ft",0.7,"Spruce","Both")
 #x,y=calc_windProfile(10,"mph",100,20,65,"ft",0.7,"Spruce")
 #stop=time.time()
 #print(stop-start)
