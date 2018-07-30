@@ -40,6 +40,9 @@ def calc_windProfile(inputSpeed,windUnits,inputHeight,outputHeight,canopyHeight,
     run canopy-flow
     Returns the desired wind speed and the path
     to a datafile where the profile data is stored
+    
+    model indicates which profile model to use
+    options are Massman / Albini
     """
         
     

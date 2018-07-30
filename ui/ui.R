@@ -108,9 +108,7 @@ shinyUI(fluidPage(theme=shinytheme("cosmo"),
              scatterD3Output("logWindPlot"),type=4
              )
         
-      )
-    
-  )
-  
-                  )
-        )
+            )
+    ) #end fluidrow
+  ) #end fluidpage
+) #End shinyui

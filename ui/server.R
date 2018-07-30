@@ -57,18 +57,18 @@ shinyServer(function(input,output,session){
   
   observeEvent(input$exec,
                {
-                 print(input$simpleCanopy)
+                 print(input$simpleCanopy) #get the args print some stuff
                  gArgs=paste("\"",input$wind_speed,"\" \"",input$spd_units,"\" \"",input$surface,"\" \"",input$init_hgt,"\" \"",input$height,"\" \"",input$canopy,"\" \"",input$hght_units,"\" \"",input$canopy_ratio,"\" \"",input$selModel,"\"",sep="")
                  print(gArgs)
-                 runFile<-system2(command=runPath,args=gArgs,stdout=TRUE)
-                 print(runFile)
-                 outDat<-strsplit(runFile,";")
-                 print(outDat[[1]][1])
+                 runFile<-system2(command=runPath,args=gArgs,stdout=TRUE) #run WHAT
+                 print(runFile) #this is the raw output of WHAT
+                 outDat<-strsplit(runFile,";") #parse into the file names and actual output for displaying
+                 print(outDat[[1]][1]) #print what we acutally want to show
                  
                  # output$adjustedSpeed<-renderPrint(paste("Calculated wind speed:",outDat[[1]][1]))
                  # output$adjustedSpeed<-renderPrint(outDat[[1]][1])
                  
-                 hdr<-"Calculated Wind Speed:"
+                 hdr<-"Calculated Wind Speed:" #the header
                  eD<-strsplit(outDat[[1]][1],hdr) #split off the Header for organization
                  oD<-strsplit(eD[[1]][2],"Albini") #split off the albini model if it exists
                   
@@ -126,6 +126,7 @@ shinyServer(function(input,output,session){
                 #    title("Wind Profile")
                 #    points(point_x,point_y,col="red",type="p",lwd=5)
                 # })
+                 #Plot the data using scatterD3
                  output$logWindPlot<-renderScatterD3({
                    scatterD3(
                      x = c(aPlotData[[1]],plotData[[1]]),
@@ -138,15 +139,14 @@ shinyServer(function(input,output,session){
                      # colors=c("2"="#546E7A","0"= "#FB8C00","1"="#F44336","3"="#2196F3"),
                      col_lab="Info",
                      legend_width = 0,
-                     lines = data.frame(slope = c(0, Inf,0,0), 
+                     lines = data.frame(slope = c(0, Inf,0,0),  #Plot some lines to show canopy ranges
                                         intercept = c(0, 0,input$canopy,(input$canopy*(1-input$canopy_ratio))),
-                                        stroke = c("#000","#000","green","green"),
+                                        stroke = c("#000","#000","green","green"), #Green because they are probably plants
                                         stroke_width = c(1,1,2,2),
                                         stroke_dasharray = c(5,5,0,0))
-                   )
-                 })
+                   ) #END scatterD3
+                 }) #END render plot
                  
                  
-               })
-  
-})
+             }) #End observe Event
+})#EndFile

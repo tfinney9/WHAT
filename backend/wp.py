@@ -2,7 +2,31 @@
 """
 Created on Tue Jul 24 10:47:44 2018
 
-Wind Profile Important stuff
+Wind Profile class
+
+Calculate a wind profile using 
+
+canopy-flow/Massman model
+
+An improved canopy wind model for predicting wind
+adjustment factors and wildland fire behavior
+
+W.J. Massman, J.M. Forthofer, and M.A. Finney
+2017
+https://www.fs.usda.gov/treesearch/pubs/54040
+
+AND/OR
+
+Albini Baughman Canopy Model
+
+ESTIMATING WINDSPEEDS FOR PREDICTING
+WILDLAND FIRE BEHAVIOR
+
+F. A. Albini and R. G. Baughman
+
+USDA Forest Service
+Research Paper INT-221
+June 1979
 
 @author: tanner
 """
@@ -47,7 +71,6 @@ class windProfile():
     PlotDataFile=""   #Massman File  
     a_PlotDataFile="" #Albini File
     
-    
     #Not Used Right Now
     zpd = 0.0 #Zero Plane Displacement rough_d
     inWindHeight=(inputWindHeight+canopy_height)-zpd
@@ -79,6 +102,11 @@ class windProfile():
         canopyFlowPath: this points to where the canopy-flow
         program is compiled, must point to an executable
         or Massman won't work
+        
+        Note that on shiny servers
+        the folders must be owned by shiny
+        ie chgp shiny plots/
+           chown shiny plots
         """
         self.dataPath = generalDataPath
         self.PlotDataPath = generalDataPath+"plots/"
@@ -86,29 +114,54 @@ class windProfile():
         self.canopyFlowPath = canopyFlowPath
         
     def set_InputWindSpeed(self,wspd,ws_units):
+        """
+        Input the Known wind speed and the units you want to use
+        mps mph kph cph fpf
+        """
         self.inputWindSpeed=calcUnits.convertFromJiveUnits(wspd,ws_units)
         self.speedUnits=ws_units
     
     def set_InputWindHeight(self,inhgt,hgt_units):
+        """
+        Input the known wind speed height and units
+        """
         self.inputWindHeight=calcUnits.distToMetric(inhgt,hgt_units)
         self.heightUnits=hgt_units
     
     def set_OutputWindHeight(self,outhgt,hgt_units):
+        """
+        Set the desired output wind speed and units
+        """
         self.outputWindHeight=calcUnits.distToMetric(outhgt,hgt_units)
         self.heightUnits=hgt_units    
     
     def set_CanopyHeight(self,cpyhgt,hgt_units):
+        """
+        Set the canopy height and units
+        """
         self.canopy_height = calcUnits.distToMetric(cpyhgt,hgt_units)
         self.heightUnits=hgt_units   
         self.manualCanopy=True
         
     def set_surface(self,surface):
+        """
+        Set the surface type/canopy type
+        some properties are stored locally such as the
+        leaf area index
+        drag coefficient 
+        and roughness
+        a default canopy height is also availble
+        but disabled
+        """
         if self.manualCanopy==False:
             self.surface,self.canopy_height,self.leafAreaIndex,self.dragCoeff,self.surfaceRoughess = getSurfaceProperties(surface,self.surfaceDataFile)
         else:
             self.surface,self.dumpCanopy,self.leafAreaIndex,self.dragCoeff,self.surfaceRoughess = getSurfaceProperties(surface,self.surfaceDataFile)
             
     def get_InputWindSpeed(self,ws_units):
+        """
+        Retreive a stored value in the requested units
+        """
         return calcUnits.convertToJiveUnits(self.inputWindSpeed,ws_units)
 
     def get_OutputWindHeight(self,hgt_units):
@@ -225,6 +278,7 @@ def twoPointNeutral_uz(uz_1,z1,z2,z0,d):
 def albini_uz_Wrapper(uz_1,z1,z2,canopy_height,crownRatio,z0c,dataPath,unitSet):
     """
     Integreate albini.py into windProfile
+    See albini.py for more info
     """
     uz_2, zArray,uArray = albini.albini_uz(uz_1,z1,z2,canopy_height,crownRatio,z0c)
     namedList=["Albini","Input","Output"]
@@ -350,24 +404,6 @@ def canopyFlow_uz(canopyFlowPath,canopyFlowDataPath,plotDataPath,uz_1,z1,z2,cano
     
     return CF_spd,dataFile,CFMSG
     
-    
-def canopyFlowMulti_uz(outHeight,path,uz_1,z1,canopy_height,z0g,LAI,Cd,CR,spdUnits):
-    """
-    Multiprocessing option for canopy-flow
-    """
-    commandList = [str(path),str(uz_1),str(z1),str(outHeight),str(canopy_height),str(z0g),str(LAI),str(Cd),str(CR)]
-    CF_out = subprocess.check_output(commandList) #solve for the height
-    CF_out=CF_out.decode()
-    ai=CF_out.find("-:")
-    fi=CF_out.find(":-")
-    try:
-        uz_i = float(CF_out[ai+2:fi])    #try to cast as float
-    except:
-        uz_i = 0.0 #this probably means its nan and therefore just throw a zero
-        pass
-
-    uz_native=calcUnits.convertToJiveUnits(uz_i,spdUnits) #convert each thing back to local units
-    return uz_native
     
 def canopyFlow_uzArray(exec_path,dataPath,uz_1,z1,canopy_height,z0g,LAI,Cd,CR,zArray):
     """    

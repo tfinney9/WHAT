@@ -3,6 +3,10 @@
 Created on Mon Jul 16 13:32:24 2018
 
 @author: tanner
+
+Units utility for WHAT
+uses pint to convert wind speeds and heights between various systems
+Also does temperature
 """
 
 import pint
