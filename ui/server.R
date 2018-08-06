@@ -14,12 +14,15 @@ library(shinycssloaders)
 #deploy Paths
 runPath<-"/home/ubuntu/hd2/src/WHAT/backend/logWindProfile.py"
 defaultPath<-"/home/ubuntu/hd2/src/WHAT/backend/data/default.csv"
+vegPath<-"/home/ubuntu/hd2/src/WHAT/backend/data/canopy_types.csv"
+
 
 #dev Paths
 if(Sys.getenv("USER")[1]=="tanner")
 {
   runPath<-"/home/tanner/src/WHAT/backend/logWindProfile.py"
   defaultPath<-"/home/tanner/src/WHAT/backend/data/default.csv"
+  vegPath<-"/home/tanner/src/WHAT/backend/data/canopy_types.csv"
 }
 
 
@@ -41,6 +44,28 @@ shinyServer(function(input,output,session){
       shinyjs::hide("crapInputs")
       shinyjs::enable("exec")
     }
+    if(input$surface=="Barren")
+    {
+      updateNumericInput(session,"canopy",value=0)
+      updateNumericInput(session,"canopy_ratio",value=0)
+      shinyjs::disable("canopy")
+      shinyjs::disable("canopy_ratio")
+    }
+    if(input$surface!="Barren" && input$canopy==0)
+    {
+      vegData<-read.csv(file=vegPath)
+      nLoc<-match(input$surface,vegData[[1]])
+      nHeight<-vegData[[2]][nLoc]
+      updateNumericInput(session,"canopy",value=nHeight*3.28)
+      updateNumericInput(session,"canopy_ratio",value=0.7)
+      # updateNumericInput(session,"canopy",value=0)
+      # updateNumericInput(session,"canopy_ratio",value=0)
+      shinyjs::enable("canopy")
+      shinyjs::enable("canopy_ratio")
+    }
+    
+    
+    
     # if(is.numeric(input$init_hgt)==TRUE && is.numeric(input$init_hgt)==TRUE)
     # {
     #   if(input$canopy>input$init_hgt)

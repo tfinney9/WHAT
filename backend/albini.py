@@ -20,7 +20,7 @@ June 1979
 
 import numpy
 
-#import matplotlib.pyplot as pyplot
+import matplotlib.pyplot as pyplot
 
 def albini_uz(uz_1,z1,z2,canopy_height,crownRatio,z0c):
     """
@@ -44,7 +44,7 @@ def albini_uz(uz_1,z1,z2,canopy_height,crownRatio,z0c):
             uz_H = albiniCanopyToTop_uz(uz_1,crownRatio,canopy_height)
             uz_2 = twoPointNeutral_uz(uz_H,canopy_height,z2,z0c,ZPD)
 #            return uz_2
-        if(z1>canopy_height):
+        if(z1>=canopy_height):
             uz_2 = twoPointNeutral_uz(uz_1,z1,z2,z0c,ZPD)
     
     zA,uA = albini_uzDataArray(uz_1,uz_2,z1,z2,canopy_height,crownRatio,z0c)    
@@ -69,7 +69,19 @@ def twoPointNeutral_uz(uz_1,z1,z2,z0,d):
     z0 = surface roughness (meters)
     
     https://en.wikipedia.org/wiki/Log_wind_profile
-    """     
+    
+    Note that if quantity: c2
+    
+            (z1 - d)
+    c2 =    -------- < 1
+               z0            
+    
+    non-physical reults will occur
+    
+    """ 
+    c2 = (z1-d)/(z0)
+    if(c2<=1.0):
+        return uz_1
     uz_2 = uz_1*(numpy.log((z2-d)/z0)/(numpy.log((z1-d)/z0)))
     return uz_2
 
@@ -125,6 +137,9 @@ def albini_uzDataArray(uz_1,uz_2,z1,z2,canopy_height,crownRatio,z0c):
     Generate an array of values for plotting using the 
     Albini canopy Model + Log Wind Profile
     """
+#    if(canopy_height<=z0c):
+#        return []
+    
     ZPDOpt="WindNinja"
     ZPD=getZPD(canopy_height,ZPDOpt)
     zMax=canopy_height #figure out the range over which to generate a plot
@@ -134,7 +149,7 @@ def albini_uzDataArray(uz_1,uz_2,z1,z2,canopy_height,crownRatio,z0c):
         zMax=z1 #use in height if its bigger
     if(canopy_height>z1 and canopy_height>z2):
         zMax=canopy_height #else just use the canopy
-#    zArray = numpy.linspace(0,2*int(zMax)) #generate an array
+    #    zArray = numpy.linspace(0,2*int(zMax)) #generate an array
 
     if(z1<canopy_height):
         uz_H = albiniCanopyToTop_uz(uz_1,crownRatio,canopy_height)
@@ -157,9 +172,12 @@ def albini_uzDataArray(uz_1,uz_2,z1,z2,canopy_height,crownRatio,z0c):
             uzB.append(uz_i)
         
         zca = numpy.linspace(0,canopy_height,25) #an array of zs for plotting
-        uz_H = albiniTopToCanopy_uz(uzB[0],crownRatio,canopy_height)
-        uzA = numpy.repeat(uz_H,25) #Velocities within the canopy are the same
-        
+       
+        if(canopy_height>0.1):
+           uz_H = albiniTopToCanopy_uz(uzB[0],crownRatio,canopy_height)
+           uzA = numpy.repeat(uz_H,25) #Velocities within the canopy are the same
+        else:
+            uzA = numpy.repeat(0,25)
         
     outZA = list(zca)
     outZA.extend(list(zcb))
@@ -170,7 +188,7 @@ def albini_uzDataArray(uz_1,uz_2,z1,z2,canopy_height,crownRatio,z0c):
     return outZA,outUZ
 #    print(uzB[0])
 #    print(uz_H)
-
+#    pyplot.figure(0)
 #    pyplot.plot(uz_1,z1,"ro")
 #    pyplot.plot(uz_2,z2,"bo")
 #    pyplot.plot(uzB[0],canopy_height,"go")
@@ -180,17 +198,26 @@ def albini_uzDataArray(uz_1,uz_2,z1,z2,canopy_height,crownRatio,z0c):
     
     
     
-    
-    
+#uz 1 uz 2 z1 z2 canopy_height cR z0c
+#albini_uzDataArray(10,17.15,5,30,5,0.2,2)
 #albini_uz(10,10,100,50,0.7,0.5)
 #albini_uz(10,120,10,100,0.7,0.5)
 #albini_uz(10,10,60,100,0.7,0.5)
 #albini_uz(10,150,120,100,0.7,0.5)
 
 
-
-
-
+#zs = numpy.linspace(2.0,50)
+#us = []
+#ZPD=getZPD(2.0,"WindNinja")
+#for i in range(len(zs)):
+#    uzu = twoPointNeutral_uz(10,20,zs[i],2.0,ZPD)
+#    us.append(uzu)
+#pyplot.figure(0)
+#pyplot.plot(us,zs,'k.')
+#
+##pyplot.xlim(-1000,600)
+##pyplot.ylim(0,6)
+#pyplot.plot(10,2.0,'ro')
 
 
 

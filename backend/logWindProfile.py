@@ -33,7 +33,7 @@ if use_crap==False:
     Use the new way
     """
     if arg_canopy==0: #canopy-flow doesn't handle 0 for a canopy very well, make it small and it works fine
-        arg_canopy=0.1
+        arg_canopy=0.01
     heightAdjustedSpeed,dataFileName=logWindProfile3.calc_windProfile(arg_windSpd,
                                                                      arg_spdUnits,
                                                                      arg_initialHeight,
