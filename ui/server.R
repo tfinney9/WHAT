@@ -51,17 +51,24 @@ shinyServer(function(input,output,session){
       shinyjs::disable("canopy")
       shinyjs::disable("canopy_ratio")
     }
-    if(input$surface!="Barren" && input$canopy==0)
+    if(input$surface!="Barren")
     {
-      vegData<-read.csv(file=vegPath)
-      nLoc<-match(input$surface,vegData[[1]])
-      nHeight<-vegData[[2]][nLoc]
-      updateNumericInput(session,"canopy",value=nHeight*3.28)
-      updateNumericInput(session,"canopy_ratio",value=0.7)
-      # updateNumericInput(session,"canopy",value=0)
-      # updateNumericInput(session,"canopy_ratio",value=0)
-      shinyjs::enable("canopy")
-      shinyjs::enable("canopy_ratio")
+      if(is.numeric(input$canopy))
+      {
+        if(input$canopy==0)
+        {
+          vegData<-read.csv(file=vegPath)
+          nLoc<-match(input$surface,vegData[[1]])
+          nHeight<-vegData[[2]][nLoc]
+          updateNumericInput(session,"canopy",value=nHeight*3.28)
+          updateNumericInput(session,"canopy_ratio",value=0.7)
+          # updateNumericInput(session,"canopy",value=0)
+          # updateNumericInput(session,"canopy_ratio",value=0)
+          shinyjs::enable("canopy")
+          shinyjs::enable("canopy_ratio")
+        }
+      }
+
     }
     
     
