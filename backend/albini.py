@@ -83,6 +83,8 @@ def twoPointNeutral_uz(uz_1,z1,z2,z0,d):
     if(c2<=1.0):
         return uz_1
     uz_2 = uz_1*(numpy.log((z2-d)/z0)/(numpy.log((z1-d)/z0)))
+    if(uz_2<0.0):
+        uz_2 = 0.0
     return uz_2
 
 def albiniTopToCanopy_uz(uH,crownRatio,H):
